@@ -27,12 +27,14 @@ A clean clone defaults to the `portable` execution profile. `setup:local` create
 
 ## Changing records for a user
 
-Prefer the app's import/export flow. If the user explicitly requests programmatic record edits, use the authenticated, version-checked state API rather than direct SQL:
+The primary daily workflow is conversational: the user tells their coding agent what they did, and the agent updates their local instance. A request to log or correct reported activities authorizes those record updates; do not send the user back to fill out the UI or prepare JSON. Use the authenticated, version-checked state API rather than direct SQL:
 
 1. Read the full current envelope and save a private backup.
 2. Preserve unrelated days, rules, focus state and source evidence. Apply only the requested edits.
 3. PUT `{state, version}` with the current version. On 409, read again and reconcile; never blindly retry a stale full-state overwrite.
 4. Read back and verify the intended changes and computed results.
+
+Resolve the record date using the conversation and the app's timezone, asking only if ambiguous (especially after midnight). Match reported work to existing tasks; treat corrections as edits, not new sessions, and avoid duplicating activities already saved. Save partial reports as drafts with missing details unconfirmed. An omitted entertainment total is not zero. Settle when requested and the required evidence is present; ask a focused question when it is missing. For an already settled day, explain the recalculated result after a correction. Finish with what was saved, any missing settlement details, and the rank change if settled. Keep setup examples out of actual records.
 
 Do not invent completed tasks, usage confirmation, bedtime, or exact study durations. `Block.minutes` can be `null`; estimates may use `minutesRange`. The current plan-file UI converts missing/null minutes to 30 and does not preserve ranges, so do not use that importer for uncertain-duration evidence. Preserve `studySession` source dates separately from settlement dates when present.
 
