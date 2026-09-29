@@ -48,6 +48,10 @@ All planned blocks completed and ≤60 minutes entertainment earns a perfect day
 
 The floor is 废铁 III 0 stars. Every deduction is recorded and animated even at the floor; no negative debt is created. Raw net stars and actual rank change are shown separately.
 
+A day can carry an explicitly requested `rewardOnlyReason` exception. That day's video and late-sleep deductions are waived, while the original evidence stays intact. Missing usage confirmation and bedtime remain unknown and do not prevent this special settlement. The exception is shown in the lobby, history and replay, never propagates to another day, and does not waive the normal perfect-day requirements. It is absent by default.
+
+Completed session records can preserve a separate `studySession` source (session ID, study date and original plan date) alongside the chosen settlement date. Unknown block minutes remain `null`; estimated durations use `minutesRange` without inventing a precise duration. Neither changes the block-based reward.
+
 ## Local imports and privacy
 
 ```sh

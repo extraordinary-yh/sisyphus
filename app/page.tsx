@@ -52,8 +52,10 @@ import {
   replay,
   previewDay,
   entertainmentSeconds,
-  videoPenalty,
-  sleepScore,
+  dayVideoPenalty,
+  daySleepScore,
+  canSettle,
+  blockDurationLabel,
   duration,
   parseUsage,
   focusRemaining,
@@ -305,7 +307,7 @@ export default function Page() {
     toast.success("计划已载入草稿，保存后生效");
   };
   const settle = async () => {
-    if (!day.usageConfirmed || !day.bedtime) {
+    if (!canSettle(day)) {
       toast.error("请先确认全天娱乐时长，并填写关闭设备时间。");
       edit("usage");
       return;
@@ -667,6 +669,9 @@ export default function Page() {
                 {busy ? "保存中…" : "保存草稿"}
               </button>
             </div>
+            {day.rewardOnlyReason && (
+              <p className="notice gold-text">✦ 奖励结算 · {day.rewardOnlyReason}</p>
+            )}
             <div className="arena">
               <section className="rank-chamber">
                 <div className="season-tag">
@@ -779,7 +784,7 @@ export default function Page() {
                       <div>
                         <h3>{b.title}</h3>
                         <p>
-                          {b.minutes} min{" "}
+                          {blockDurationLabel(b)}{" "}
                           <span>· {b.done ? "已完成" : "学习主线"}</span>
                         </p>
                       </div>
@@ -789,7 +794,7 @@ export default function Page() {
                       <button
                         className="icon-button"
                         aria-label={`专注 ${b.title}`}
-                        onClick={() => startTask(b.id, b.minutes)}
+                        onClick={() => startTask(b.id, b.minutes ?? 30)}
                       >
                         <Play size={14} />
                       </button>
@@ -908,9 +913,9 @@ export default function Page() {
                         ? "全天时长已确认"
                         : "尚未确认全天时长"}
                     </span>
-                    <b className={totalSeconds > 3600 ? "danger-text" : ""}>
-                      {videoPenalty(totalSeconds, day.rules.mode)
-                        ? `−${videoPenalty(totalSeconds, day.rules.mode)} ★`
+                    <b className={dayVideoPenalty(day) > 0 ? "danger-text" : "gold-text"}>
+                      {dayVideoPenalty(day)
+                        ? `−${dayVideoPenalty(day)} ★`
                         : "0 ★"}
                     </b>
                   </div>
@@ -924,10 +929,11 @@ export default function Page() {
                       </div>
                     ))}
                   <p>
-                    首小时免费 ·{" "}
-                    {day.rules.mode === "gradient"
-                      ? "超时梯度扣星，最多 −32"
-                      : "超时每开始一小时 −1"}
+                    {day.rewardOnlyReason
+                      ? "本日仅计正向奖励 · 使用时长保留，不扣星"
+                      : day.rules.mode === "gradient"
+                        ? "首小时免费 · 超时梯度扣星，最多 −32"
+                        : "首小时免费 · 超时每开始一小时 −1"}
                   </p>
                   <button
                     className="outline-button"
@@ -969,8 +975,8 @@ export default function Page() {
                   </span>
                   <b>
                     {day.bedtime
-                      ? sign(sleepScore(day.bedtime, day.rules.mode))
-                      : "+1"}{" "}
+                      ? sign(daySleepScore(day))
+                      : day.rewardOnlyReason ? "0" : "+1"}{" "}
                     ★
                   </b>
                 </button>
@@ -1067,7 +1073,7 @@ export default function Page() {
                       <tr key={r.date}>
                         <td>{r.date}</td>
                         <td>
-                          {r.perfect ? (
+                          {r.rewardOnlyReason ? "✦ 奖励结算" : r.perfect ? (
                             <span className="gold-text">✦ 完美一天</span>
                           ) : r.shieldUsed ? (
                             "◇ 护盾守护"
@@ -1076,7 +1082,7 @@ export default function Page() {
                           )}
                         </td>
                         <td className="gold-text">+{r.gained}</td>
-                        <td className="danger-text">−{r.lost}</td>
+                        <td className={r.lost ? "danger-text" : ""}>{r.lost ? `−${r.lost}` : "0"}</td>
                         <td>{sign(r.applied)}</td>
                         <td>
                           {rankAt(r.after).label} · {rankAt(r.after).filled} ★
@@ -1279,12 +1285,13 @@ export default function Page() {
                             type="number"
                             min={1}
                             max={480}
-                            value={b.minutes}
+                            value={b.minutes ?? ""}
+                            placeholder="未确认"
                             onChange={(e) =>
                               update({
                                 blocks: day.blocks.map((x) =>
                                   x.id === b.id
-                                    ? { ...x, minutes: Number(e.target.value) }
+                                    ? { ...x, minutes: e.target.value === "" ? null : Number(e.target.value), minutesRange: undefined }
                                     : x,
                                 ),
                               })
@@ -1479,8 +1486,8 @@ export default function Page() {
                         娱乐总量 <b>{duration(totalSeconds)}</b>
                       </span>
                       <strong className="danger-text">
-                        {videoPenalty(totalSeconds, day.rules.mode)
-                          ? `−${videoPenalty(totalSeconds, day.rules.mode)}`
+                        {dayVideoPenalty(day)
+                          ? `−${dayVideoPenalty(day)}`
                           : "0"}{" "}
                         ★
                       </strong>
@@ -1594,13 +1601,13 @@ export default function Page() {
                       />
                       <strong
                         className={
-                          sleepScore(day.bedtime, day.rules.mode) < 0
+                          daySleepScore(day) < 0
                             ? "danger-text"
                             : "gold-text"
                         }
                       >
                         {day.bedtime
-                          ? `${sign(sleepScore(day.bedtime, day.rules.mode))} ★`
+                          ? `${sign(daySleepScore(day))} ★`
                           : "待录入"}
                       </strong>
                     </div>
@@ -1612,6 +1619,7 @@ export default function Page() {
                 </TabsContent>
                 <TabsContent value="review">
                   <div className="dialog-section">
+                    {day.rewardOnlyReason && <p className="notice gold-text">✦ {day.rewardOnlyReason}。本日扣星已豁免，未知时长与睡眠保持未确认。</p>}
                     <div className="review-score">
                       <span>今日预计净变化</span>
                       <strong
@@ -1683,7 +1691,7 @@ export default function Page() {
                     />
                     <p className="fine-print">
                       规则：
-                      {day.rules.mode === "gradient" ? "梯度惩罚" : "线性惩罚"}
+                      {day.rewardOnlyReason ? "本日仅计正向奖励" : day.rules.mode === "gradient" ? "梯度惩罚" : "线性惩罚"}
                       。全天时长{day.usageConfirmed ? " ✓" : " 未确认"} ·
                       入睡时间{day.bedtime ? " ✓" : " 未填写"}。
                       {day.settled
@@ -1692,7 +1700,7 @@ export default function Page() {
                     </p>
                     <button
                       className="gold-button full"
-                      disabled={!day.usageConfirmed || !day.bedtime || busy}
+                      disabled={!canSettle(day) || busy}
                       onClick={settle}
                     >
                       {day.settled
@@ -2108,9 +2116,10 @@ export default function Page() {
                       获得 <b>+{result.gained}</b>
                     </span>
                     <span>
-                      扣除 <b>−{result.lost}</b>
+                      扣除 <b>{result.lost ? `−${result.lost}` : "0"}</b>
                     </span>
                   </div>
+                  {result.rewardOnlyReason && <p className="gold-text">✦ {result.rewardOnlyReason}</p>}
                   {result.shieldUsed && (
                     <p className="gold-text">◇ 护盾已消耗 · 连胜守住了</p>
                   )}

@@ -13,7 +13,8 @@ const roman = ["", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
 export type Block = {
   id: string;
   title: string;
-  minutes: number;
+  minutes: number | null;
+  minutesRange?: { min: number; max: number };
   done: boolean;
   firstAction: string;
 };
@@ -47,6 +48,8 @@ export type Day = {
   rules: Rules;
   planSource: string;
   useShield: boolean;
+  rewardOnlyReason?: string;
+  studySession?: { id: string; studyDate: string; planDate: string };
 };
 export type Focus = {
   id: string;
@@ -92,6 +95,7 @@ export type Result = {
   shields: number;
   bonus: number;
   studyRemainder: number;
+  rewardOnlyReason?: string;
 };
 export const DEFAULT_RULES: Rules = {
   mode: "gradient",
@@ -165,6 +169,20 @@ export function sleepScore(time: string, mode: Rules["mode"] = "gradient") {
   if (mode === "linear") return -1;
   if (night < 60) return 0;
   return -Math.min(16, 2 ** (Math.floor(night / 60) - 1));
+}
+export function dayVideoPenalty(day: Day) {
+  return day.rewardOnlyReason ? 0 : videoPenalty(entertainmentSeconds(day), day.rules.mode);
+}
+export function daySleepScore(day: Day) {
+  const score = sleepScore(day.bedtime, day.rules.mode);
+  return day.rewardOnlyReason ? Math.max(0, score) : score;
+}
+export function canSettle(day: Pick<Day, "rewardOnlyReason" | "usageConfirmed" | "bedtime">) {
+  return !!day.rewardOnlyReason || (day.usageConfirmed && !!day.bedtime);
+}
+export function blockDurationLabel(block: Block) {
+  if (block.minutesRange) return `约 ${block.minutesRange.min}–${block.minutesRange.max} min`;
+  return block.minutes === null ? "实际时长未确认" : `${block.minutes} min`;
 }
 export function duration(seconds: number) {
   const s = Math.round(seconds);
@@ -271,11 +289,11 @@ export function replay(days: Day[]): Result[] {
         shieldUsed = true;
       } else streak = 0;
     }
-    const sleep = sleepScore(day.bedtime, day.rules.mode);
+    const sleep = daySleepScore(day);
     if (sleep > 0) add("早睡 · 关闭全部设备", sleep, "sleep");
     add(
       `娱乐 ${duration(entertainmentSeconds(day))}`,
-      -videoPenalty(entertainmentSeconds(day), day.rules.mode),
+      -dayVideoPenalty(day),
       "video",
     );
     if (sleep < 0) add(`晚睡 · ${day.bedtime}`, sleep, "sleep");
@@ -297,6 +315,7 @@ export function replay(days: Day[]): Result[] {
       shields,
       bonus,
       studyRemainder: completed.length % divisor,
+      ...(day.rewardOnlyReason ? { rewardOnlyReason: day.rewardOnlyReason } : {}),
     });
     previous = day.date;
   }

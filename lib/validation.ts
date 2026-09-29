@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { today } from "./game";
+import { today, canSettle } from "./game";
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -29,7 +29,11 @@ const day = z
         z.object({
           id,
           title: label,
-          minutes: z.number().int().min(1).max(480),
+          minutes: z.number().int().min(1).max(480).nullable(),
+          minutesRange: z.object({
+            min: z.number().int().min(1).max(1440),
+            max: z.number().int().min(1).max(1440),
+          }).refine(v => v.min <= v.max, "时长区间无效").optional(),
           done: z.boolean(),
           firstAction: z.string().max(1200),
         }),
@@ -70,9 +74,11 @@ const day = z
     rules,
     planSource: z.string().max(300),
     useShield: z.boolean(),
+    rewardOnlyReason: z.string().trim().min(1).max(300).optional(),
+    studySession: z.object({ id, studyDate: date, planDate: date }).optional(),
   })
   .refine(
-    (d) => !d.settled || (d.usageConfirmed && !!d.bedtime),
+    (d) => !d.settled || canSettle(d),
     "结算前请确认全天娱乐时长并填写关闭设备时间",
   );
 export const stateSchema = z.object({

@@ -10,6 +10,10 @@ import {
   parseUsage,
   DEFAULT_RULES,
   today,
+  dayVideoPenalty,
+  daySleepScore,
+  canSettle,
+  blockDurationLabel,
 } from "../lib/game.ts";
 function day(date = "2026-01-01", count = 1) {
   return {
@@ -26,6 +30,48 @@ function day(date = "2026-01-01", count = 1) {
     settled: true,
   };
 }
+test("explicit reward-only day preserves evidence, waives losses and does not invent a perfect day", () => {
+  const d = day("2026-01-01", 4);
+  d.rewardOnlyReason = "Opening-day rewards only";
+  d.usage = [{ id: "v", name: "Video", seconds: 19000, category: "video" }];
+  d.usageConfirmed = false;
+  d.bedtime = "";
+  d.blocks[0].minutes = null;
+  d.blocks[1].minutes = null;
+  d.blocks[1].minutesRange = { min: 90, max: 120 };
+  const original = structuredClone(d);
+  const r = replay([d])[0];
+  assert.deepEqual(d, original);
+  assert.equal(canSettle(d), true);
+  assert.equal(r.gained, 4);
+  assert.equal(r.lost, 0);
+  assert.equal(r.net, 4);
+  assert.equal(r.after, 4);
+  assert.equal(r.perfect, false);
+  assert.equal(r.streak, 0);
+  assert.equal(r.events.length, 4);
+  assert.equal(rankAt(r.after).label, "废铁 Ⅱ");
+  assert.equal(rankAt(r.after).filled, 1);
+  assert.equal(dayVideoPenalty(d), 0);
+  assert.equal(daySleepScore({ ...d, bedtime: "04:00" }), 0);
+  assert.equal(daySleepScore({ ...d, bedtime: "00:20" }), 1);
+  assert.equal(blockDurationLabel(d.blocks[0]), "实际时长未确认");
+  assert.equal(blockDurationLabel(d.blocks[1]), "约 90–120 min");
+  assert.equal(replay([d])[0].after, 4);
+});
+test("reward-only exception never carries to the next day", () => {
+  const a = day("2026-01-01", 4);
+  a.rewardOnlyReason = "Opening-day rewards only";
+  const b = day("2026-01-02", 0);
+  b.usage = [{ id: "v", name: "Video", seconds: 7201, category: "video" }];
+  b.bedtime = "02:00";
+  const r = replay([a, b])[1];
+  assert.equal(r.lost, 4);
+  assert.equal(r.after, 0);
+  assert.equal(canSettle({ ...b, usageConfirmed: false }), false);
+  assert.equal(canSettle({ ...b, bedtime: "" }), false);
+  assert.equal(newDay("2026-01-03").rewardOnlyReason, undefined);
+});
 test("starts at iron III zero; all rank and subdivision thresholds", () => {
   assert.equal(rankAt(0).label, "废铁 Ⅲ");
   assert.equal(rankAt(2).filled, 2);
