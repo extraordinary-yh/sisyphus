@@ -1,0 +1,15 @@
+{
+  "generator": "built-in image_gen",
+  "assets": [
+    {
+      "file": "public/art/lobby.png",
+      "transparent_background": false,
+      "prompt": "Use case: stylized-concept\nAsset type: cinematic wide fantasy game lobby background, landscape 16:9.\nPrimary request: midnight deep navy mountains, an ancient stone temple/citadel on a tall distant peak, faint teal moonlight and muted golden light at the distant summit.\nStyle/medium: premium realistic painterly MOBA menu environment art, exquisite atmospheric perspective and stone textures.\nComposition/framing: panoramic mountains and mist with low contrast central negative space for game UI; distant citadel remains visually subordinate. No UI is drawn.\nLighting/mood: solemn, vast, mysterious midnight, restrained glow.\nColor palette: deep midnight navy, desaturated blue-teal, subtle muted gold only at summit.\nConstraints: original environment art; no text, letters, numbers, logos, UI, watermark, or people."
+    },
+    {
+      "file": "public/art/ranks.png",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept\nAsset type: transparent game rank insignia atlas in a landscape 2:1 canvas, exactly 4 columns by 2 rows of identical square cells.\nPrimary request: exactly 8 distinct exquisitely rendered metallic MOBA rank insignias on genuine transparent background. Top row from left to right: humble weathered iron shield; bronze horn shield; silver wing shield; gold eagle shield. Bottom row from left to right: platinum teal ornate wings; blue diamond crystal wings; violet stellar crown; legendary elaborate gold dragon crown.\nStyle/medium: premium realistic three-dimensional game inventory icons, fine sculpted metal relief, layered bevels, polished highlights and jewel detail; richly rendered, never flat icons.\nComposition/framing: perfectly regular 4-column 2-row atlas, every emblem centered within its own identical square cell, equal emblem scale, maximum emblem width and height 65% of each cell. Wide completely transparent padding between emblems and around outer edges. Grid lines and cells are invisible.\nConstraints: all eight emblems fully visible and separate, no overlap. Exactly two rows, exactly four icons in each row. Actual alpha transparency everywhere outside emblems, preserve small openings within ornamental wings. No background, no text, numbers, labels, logos, frames, UI or watermark."
+    }
+  ]
+}
