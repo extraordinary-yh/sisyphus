@@ -1,0 +1,12 @@
+{
+  "date": "2026-01-01",
+  "blocks": [
+    {
+      "id": "study-1",
+      "title": "学习一个新概念",
+      "minutes": 30,
+      "done": false,
+      "firstAction": "打开笔记，写下今天要回答的问题"
+    }
+  ]
+}

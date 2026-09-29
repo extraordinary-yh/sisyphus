@@ -11,3 +11,15 @@ The initial release was checked locally with:
 - Reward-only settlement was saved through the version-checked API and read back. The browser showed four completed blocks, unknown/range durations, four awarded stars, zero deductions, a promotion and the explicit one-day exception. Original usage and missing bedtime evidence were preserved.
 
 Run the optional local API smoke check with `node --experimental-strip-types tests/api-smoke.mjs` while the development server is running. It refuses non-loopback URLs and aborts if its synthetic date is already in use. Source-control privacy checks run separately with `npm run privacy:check` after staging.
+
+## Onboarding verification — 2026-09-29
+
+The documented portable workflow was exercised in an isolated temporary copy with no personal runtime state, no cloud credentials, a fresh dependency install and its own local D1 database:
+
+- `npm ci`, `npm run setup:local`, and `npm run db:local` completed; the initial migration created the database.
+- `npm run build` completed from that clean installation.
+- `npm run dev -- --host 127.0.0.1 --port 5187 --strictPort` served the app; the browser displayed the empty lobby and connected-records status.
+- The live API smoke test passed local sign-in, persistence/readback, stale version, invalid settlement, duplicate date, cross-origin and unauthenticated checks. Its synthetic record was removed.
+- The working checkout passed all 17 game tests, TypeScript checking, documentation relative-link/example checks and the staged privacy scan.
+
+This run used macOS with Node 23.7.0/npm 10.9.2 already installed. npm warned that an ESLint dependency excludes Node 23; the onboarding guide recommends Node 24 or Node 22.13+ within the 22.x line. No Windows/Linux startup or Node 24 run was performed in this check. The sandbox required explicit loopback-port permission for the database tool and dev server. The `db:local` script now loads the existing project-local environment configuration so Wrangler does not try to write its logs into the user preferences directory.

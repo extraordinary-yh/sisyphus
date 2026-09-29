@@ -13,7 +13,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "setup:local": "node scripts/setup-local.mjs",
-    "db:local": "wrangler d1 migrations apply DB --local --config .sites-runtime/local-db.json --persist-to .wrangler/state",
+    "db:local": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --local --config .sites-runtime/local-db.json --persist-to .wrangler/state",
     "test": "node --experimental-strip-types --test tests/game.test.mjs",
     "typecheck": "tsc --noEmit",
     "privacy:check": "node scripts/privacy-check.mjs"
