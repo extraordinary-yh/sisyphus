@@ -13,6 +13,8 @@
 
 Study: one star per block below Diamond; one per two blocks from Diamond onward, determined by the rank at the start of the day. Odd blocks do not carry over. Each qualifying hobby awards one star per day. The default qualifying duration, including exercise, is 30 minutes.
 
+The optional `studyReward: "time-or-blocks"` rule replaces the block reward with `max(floor(productiveMinutes / 120), completed blocks)` at every rank. `productiveMinutes` is the day's total study and job-search time, including time spent on blocks; count overlapping work only once. Missing/null minutes stay unconfirmed and supply no time-based reward. Rewards use the larger value, never their sum, and partial stars do not carry over. Each day retains its own rule snapshot, so selecting this default for new records does not recalculate older days under the new formula. Time rewards do not mark blocks completed or relax perfect-day and settlement requirements.
+
 Gradient entertainment penalties: ≤1h 0; >1h −1; >2h −2; >3h −4; >4h −8; >5h −16; >6h −32, capped at 32. Exact 2h remains −1; one second later becomes −2. Video and manually entered games share this total.
 
 Sleep: ≤00:30 +1; 00:31–00:59 0; 01:00–01:59 −1; 02:00–02:59 −2; 03:00–03:59 −4; 04:00–04:59 −8; 05:00 onward −16. Evening times belong to the selected day, post-midnight times to the following morning. The linear original rule is also available in settings.

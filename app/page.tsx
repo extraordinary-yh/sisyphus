@@ -766,6 +766,12 @@ export default function Page() {
                     {day.blocks.length} <Settings2 size={13} />
                   </button>
                 </div>
+                {day.rules.studyReward === "time-or-blocks" && (
+                  <p className="fine-print">
+                    学习＋找工 {day.productiveMinutes == null ? "时长待确认" : duration(day.productiveMinutes * 60)}
+                    {" · "}主线预计 +{preview.events.filter((e) => e.type === "study").length} ★
+                  </p>
+                )}
                 {day.blocks.length ? (
                   day.blocks.map((b, i) => (
                     <div className={`quest ${b.done ? "done" : ""}`} key={b.id}>
@@ -789,7 +795,7 @@ export default function Page() {
                         </p>
                       </div>
                       <span className="reward">
-                        {rankAt(preview.before).index >= 5 ? "½" : "+1"} ★
+                        {day.rules.studyReward !== "time-or-blocks" && rankAt(preview.before).index >= 5 ? "½" : "+1"} ★
                       </span>
                       <button
                         className="icon-button"
@@ -1225,6 +1231,27 @@ export default function Page() {
                 </TabsList>
                 <TabsContent value="study">
                   <div className="dialog-section">
+                    {day.rules.studyReward === "time-or-blocks" && (
+                      <>
+                        <label className="input-row">
+                          学习＋找工实际总分钟
+                          <input
+                            aria-label="学习＋找工实际总分钟"
+                            type="number"
+                            min={0}
+                            max={1440}
+                            step={1}
+                            placeholder="未确认"
+                            value={day.productiveMinutes ?? ""}
+                            onChange={(e) => update({ productiveMinutes: e.target.value === "" ? null : Number(e.target.value) })}
+                          />
+                        </label>
+                        <p className="fine-print">
+                          主线奖励取「总分钟 ÷120，向下取整」和「完成 block 数」中的较大值，各段位相同。
+                          这里填当天学习与找工的总投入，包含 block 所用时间，重叠时间只计一次。留空表示未确认；时间奖励不代替任务完成，也不自动获得完美一天。
+                        </p>
+                      </>
+                    )}
                     <div className="toolbar">
                       <button
                         className="outline-button"
@@ -1248,8 +1275,10 @@ export default function Page() {
                       )}
                     </div>
                     <p className="fine-print">
-                      {day.planSource}。钻石以下每个 block +1；钻石起每两个
-                      +1，当天不足两个的余数不跨日累计。
+                      {day.planSource}。
+                      {day.rules.studyReward === "time-or-blocks"
+                        ? "每个完成 block 计 1，与学习＋找工时间奖励取较大值。"
+                        : "钻石以下每个 block +1；钻石起每两个 +1，当天不足两个的余数不跨日累计。"}
                     </p>
                     {day.blocks.map((b, i) => (
                       <div className="block-editor" key={b.id}>
@@ -1728,9 +1757,9 @@ export default function Page() {
                 → 星耀 5×5 → 王者。共 109 颗段位星抵达王者，之后无上限。
               </p>
               <p>
-                钻石以下每个完成的 study block
-                +1；从每天开始时的段位判断，钻石及以上每两个
-                +1。每种生活支线每天 +1。每天只结算一次，允许修订和重算。
+                时间或 block 模式：主线星数 = max(⌊学习＋找工小时 ÷2⌋, 完成 block 数)，各段位相同，不重复相加。
+                原 block 模式：钻石以下每个完成 block +1，钻石及以上每两个 +1，按日初段位判断。
+                每种生活支线每天 +1。每天只结算一次，允许修订和重算。
               </p>
               <h3>时间的代价</h3>
               <div className="rule-table">
@@ -1759,6 +1788,21 @@ export default function Page() {
                 每累计 7 个连胜达标日可得 1 面护盾，最多持有 1
                 面。主动勾选才使用：仅保留连胜，不增加天数，不发奖励，不抵扣惩罚。严格连续天数依然归零。未录入的空白日不能自动用护盾。
               </p>
+              <label className="input-row">
+                新记录默认主线奖励
+                <select
+                  value={state.rules.studyReward ?? "blocks"}
+                  onChange={(e) => {
+                    const rules = { ...state.rules, studyReward: e.target.value as "blocks" | "time-or-blocks" };
+                    setState((s) => ({ ...s, rules }));
+                    if (!day.settled) update({ rules });
+                    setDirty(true);
+                  }}
+                >
+                  <option value="blocks">完成 block（原规则）</option>
+                  <option value="time-or-blocks">学习＋找工时间或 block，取较大值</option>
+                </select>
+              </label>
               <label className="input-row">
                 新记录默认惩罚
                 <select

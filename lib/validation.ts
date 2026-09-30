@@ -18,6 +18,7 @@ const rules = z.object({
   mode: z.enum(["gradient", "linear"]),
   streak: z.boolean(),
   shield: z.boolean(),
+  studyReward: z.enum(["blocks", "time-or-blocks"]).optional(),
 });
 const unique = (a: { id: string }[]) =>
   new Set(a.map((x) => x.id)).size === a.length;
@@ -76,6 +77,7 @@ const day = z
     useShield: z.boolean(),
     rewardOnlyReason: z.string().trim().min(1).max(300).optional(),
     studySession: z.object({ id, studyDate: date, planDate: date }).optional(),
+    productiveMinutes: z.number().int().min(0).max(1440).nullable().optional(),
   })
   .refine(
     (d) => !d.settled || canSettle(d),

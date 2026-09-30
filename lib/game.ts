@@ -34,6 +34,7 @@ export type Rules = {
   mode: "gradient" | "linear";
   streak: boolean;
   shield: boolean;
+  studyReward?: "blocks" | "time-or-blocks";
 };
 export type Day = {
   date: string;
@@ -50,6 +51,7 @@ export type Day = {
   useShield: boolean;
   rewardOnlyReason?: string;
   studySession?: { id: string; studyDate: string; planDate: string };
+  productiveMinutes?: number | null;
 };
 export type Focus = {
   id: string;
@@ -254,7 +256,8 @@ export function replay(days: Day[]): Result[] {
       }
     };
     const completed = day.blocks.filter((b) => b.done);
-    const divisor = rankAt(before).index >= 5 ? 2 : 1;
+    const timeReward = day.rules.studyReward === "time-or-blocks";
+    const divisor = !timeReward && rankAt(before).index >= 5 ? 2 : 1;
     for (let i = 0; i + divisor <= completed.length; i += divisor)
       add(
         divisor === 1
@@ -263,6 +266,11 @@ export function replay(days: Day[]): Result[] {
         1,
         "study",
       );
+    if (timeReward) {
+      const timeStars = Math.floor((day.productiveMinutes ?? 0) / 120);
+      const extra = Math.max(0, timeStars - completed.length);
+      if (extra) add(`学习＋找工 · ${duration((day.productiveMinutes ?? 0) * 60)} · 时间补足`, extra, "study");
+    }
     for (const h of day.hobbies)
       if (h.minutes >= h.target)
         add(`${h.title} · ${h.minutes} min`, 1, "hobby");
