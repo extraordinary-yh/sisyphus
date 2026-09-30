@@ -257,3 +257,42 @@ test('focus countdown survives a stale render clock, elapsed deadline and pause'
   assert.equal(focusRemaining(f,120000),0);
   assert.equal(focusRemaining({...f,status:'paused',endsAt:null,remaining:27},120000),27);
 });
+
+test('time-or-blocks takes the larger reward, floors two-hour boundaries and leaves evidence unchanged', () => {
+  const d = day('2026-01-01', 0);
+  d.rules = { ...d.rules, studyReward: 'time-or-blocks' };
+  for (const [minutes, stars] of [[null, 0], [0, 0], [119, 0], [120, 1], [239, 1], [240, 2], [299, 2]]) {
+    d.productiveMinutes = minutes;
+    const original = structuredClone(d);
+    const result = replay([d])[0];
+    assert.equal(result.gained, stars);
+    assert.equal(result.perfect, false);
+    assert.deepEqual(d, original);
+  }
+  d.blocks = day().blocks;
+  d.productiveMinutes = 240;
+  assert.equal(replay([d])[0].gained, 2); // max(2, 1), not 3
+  d.blocks = day('2026-01-01', 3).blocks;
+  assert.equal(replay([d])[0].gained, 3); // blocks can win
+  assert.equal(replay([{ ...d, productiveMinutes: null }])[0].gained, 3);
+});
+test('new reward applies at every rank while legacy days retain Diamond pairing', () => {
+  const ds = Array.from({length: 3}, (_, i) => ({
+    ...day(shiftDay('2026-01-01', i), 20),
+    rules: {mode: 'gradient', streak: false, shield: false},
+    productiveMinutes: 1440, // legacy ignores the new evidence field
+  }));
+  assert.equal(replay(ds).at(-1).after, 60);
+  const d = day('2026-01-04', 3);
+  d.rules = {mode: 'gradient', streak: false, shield: false};
+  assert.equal(replay([...ds, d]).at(-1).gained, 1);
+  d.rules.studyReward = 'time-or-blocks';
+  d.productiveMinutes = 240;
+  const result = replay([...ds, d]).at(-1);
+  assert.equal(result.gained, 3);
+  assert.equal(result.studyRemainder, 0);
+  assert.deepEqual(replay([...ds, d]).slice(0, 3), replay(ds));
+  const draft = {...d, settled: false, bedtime: '', usageConfirmed: true};
+  assert.equal(canSettle(draft), false);
+  assert.deepEqual(replay([...ds, draft]), replay(ds));
+});

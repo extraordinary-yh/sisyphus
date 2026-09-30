@@ -68,6 +68,8 @@ Do not invent completed tasks, usage confirmation, bedtime, or exact study durat
 
 ## Commits and handoff
 
+For repository changes, the owner requests a pull request, self-review, and direct merge into `main` after required checks pass. Use this workflow for future changes unless the owner says otherwise. Record-only updates stay in the local database and must not be committed or included in PRs.
+
 Stage only intended files. Run `git diff --cached --check` and `npm run privacy:check` after staging: the latter scans the Git index, not all working-tree changes. Inspect the diff manually; the scan detects only known patterns and is not a comprehensive secret audit. Preserve vendored licenses.
 
 Never include `.env*`, `.wrangler/`, `private-data/`, `.sites-runtime/`, `.openai/hosting.json`, exports or QA backups. Do not change repository visibility, deploy, or publish a release merely because onboarding is complete; do so when requested by the owner.
