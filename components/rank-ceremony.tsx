@@ -52,7 +52,6 @@ export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, on
       }
     };
     if (event) {
-      if (event.delta > 0) cue("rise", 240);
       cue(event.delta > 0 ? "impact" : "fracture", IMPACT_MS);
       if (event.promotion) cue("promotion", TRANSFORM_MS);
       if (event.demotion) cue("demotion", TRANSFORM_MS);

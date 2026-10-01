@@ -27,9 +27,9 @@ This run used macOS with Node 23.7.0/npm 10.9.2 already installed. npm warned th
 ## Rank ceremony verification — 2026-10-01
 
 - 23 deterministic tests passed, including exact-yesterday replay, per-star timeline completion, impact timing, promotion socket counts, demotion, floor protection and King boundary counters.
-- TypeScript checking passed on Node 24.19. Production build passed using the checkout’s existing Node 23.7 x64 installation. The separate Node 24 arm64 build attempt could not use the installed x64 native Rolldown dependency; no lockfile or dependency changes were made for this local architecture mismatch. CI uses Node 24 on Linux.
+- TypeScript checking passed. Production build passed using the checkout’s existing Node 23.7 x64 installation. The separate Node 24 arm64 build attempt could not use the installed x64 native Rolldown dependency; no lockfile or dependency changes were made for this local architecture mismatch. CI uses Node 24 on Linux.
 - Browser verification covered automatic entry replay, centered lobby, falling-star alignment, promotion and demotion poses, complete synthetic playback, pause/resume, result controls and original synthesized audio. No personal database writes were used for QA.
-- Offline audio rendering at 48 kHz, master gain 0.6: peak amplitudes were rise 0.028, impact 0.213, fracture 0.137, promotion 0.125, demotion 0.087 and finish 0.104. All were non-silent and below clipping. This is a signal check, not a subjective listening certification.
+- Final audio revision: the pre-impact rise/whoosh was removed entirely. Four-second stereo OfflineAudioContext renders at 48 kHz used the same room, compressor and soft saturation as live playback. Peak amplitudes: impact 0.904, fracture 0.292, promotion 0.390, demotion 0.240 and finish 0.382. Impact RMS was 0.1451; all final tails decayed to zero and no digital clipping was observed. These are signal checks, not a subjective listening certification. The development preview also provides a single-star audition button.
 - This run inspected desktop in-app browser views. It is not a mobile-device or cross-browser certification.
 
 See [rank ceremony behavior and development previews](rank-ceremony.md).
