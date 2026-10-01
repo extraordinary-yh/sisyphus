@@ -1446,91 +1446,6 @@ input.number-input {
   color: #8fa5b9;
   margin-top: 8px;
 }
-.settlement-dialog {
-  max-width: 630px !important;
-  background:
-    radial-gradient(ellipse at 50% 28%, #37516877, transparent 60%), #0b1928 !important;
-}
-.settlement-content {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-  padding: 8px 12px 20px;
-  gap: 8px;
-  min-height: 440px;
-}
-.settlement-content > .crest {
-  margin: -8px 0;
-}
-.star-burst {
-  font-family: Georgia;
-  font-size: 70px;
-  line-height: 1.2;
-  color: #efd29b;
-  text-shadow: 0 0 35px #e3b05299;
-  animation: starEnter 0.7s ease-out both;
-}
-.loss .star-burst {
-  color: #d78a84;
-  text-shadow: 0 0 35px #d2615d88;
-  animation: starFall 0.7s ease-out both;
-}
-.settlement-content h2 {
-  font-size: 16px;
-  letter-spacing: 1px;
-  font-weight: 500;
-}
-.settlement-content p {
-  font-size: 11px;
-  color: #94a8ba;
-  margin: 5px 0;
-}
-.event-rank {
-  color: #d4bd90 !important;
-}
-.promotion-banner {
-  padding: 12px 24px;
-  color: #efd08e;
-  background: linear-gradient(90deg, transparent, #c3a45833, transparent);
-  font-size: 15px;
-  letter-spacing: 3px;
-  animation: starEnter 0.7s ease-out both;
-}
-.demotion-banner {
-  color: #b99596;
-  font-size: 12px;
-}
-.playback-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 20px;
-  font-size: 10px;
-  color: #8fa4b5;
-}
-.settled-title {
-  font-size: 26px !important;
-  color: #e3caa0;
-  letter-spacing: 3px !important;
-}
-.final-score {
-  font-family: Georgia;
-  font-size: 56px;
-  color: #dbc08e;
-}
-.settlement-totals {
-  display: flex;
-  gap: 30px;
-  font-size: 12px;
-  color: #859db1;
-  margin: 12px 0 22px;
-}
-.settlement-totals b {
-  color: #cdbb9b;
-  font-weight: 400;
-}
 .event-ledger {
   width: 100%;
   margin-top: 20px;
@@ -1554,29 +1469,6 @@ input.number-input {
 }
 .hidden {
   display: none;
-}
-@keyframes starEnter {
-  0% {
-    opacity: 0;
-    transform: scale(0.4) translateY(30px);
-  }
-  65% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-@keyframes starFall {
-  0% {
-    opacity: 0;
-    transform: translateY(-30px) scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1690,4 +1582,146 @@ input.number-input {
   .range-buttons button {
     padding: 5px 8px;
   }
+}
+
+/* The rank is the main stage; daily inputs live below it. */
+.lobby-top-compact { margin-bottom: 14px; }
+.lobby-top-compact h1 { font-size: 15px; letter-spacing: 1px; color: #9caaba; margin-top: 5px; }
+.lobby-top-compact .eyebrow { font-size: 9px; }
+.arena { grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr); gap: 36px; }
+.arena > .rank-chamber { grid-column: 1 / -1; overflow: hidden; padding: 24px 35px 28px; border: 0; border-bottom: 1px solid #c7aa6740; background: radial-gradient(ellipse at 50% 38%, #45657838, transparent 62%); box-shadow: none; }
+.rank-chamber:before, .rank-chamber:after { display: none; }
+.rank-chamber .season-tag { position: absolute; top: 22px; left: 24px; right: 24px; z-index: 1; }
+.hero-rank-art { position: relative; height: 340px; width: min(100%, 660px); margin: -5px auto -12px; isolation: isolate; filter: none; }
+.hero-rank-art > .crest { width: 360px !important; height: 360px !important; z-index: 2; filter: drop-shadow(0 18px 22px #0009) drop-shadow(0 0 28px #d8bd7440); animation: crestBreathe 6s ease-in-out infinite; }
+.rank-chamber h2 { position: relative; z-index: 2; font-family: "Songti SC", "Noto Serif SC", Georgia, serif; font-size: clamp(48px, 5vw, 72px); font-weight: 700; letter-spacing: 12px; line-height: 1.3; text-shadow: 0 3px 1px #080e17, 0 0 40px #e0c28038; color: #f1e4ca; }
+.rank-chamber > .eyebrow { position: relative; z-index: 1; font-size: 9px; letter-spacing: 5px; }
+.rank-chamber > .hero-score { margin: 8px 0 20px; font-size: 11px; color: #9fa9b5; letter-spacing: 1px; }
+.hero-score b { color: #f3d997; font-family: Georgia, serif; font-size: 17px; }
+.rank-chamber > .next-rank, .rank-chamber > .rank-progress { max-width: 380px; margin-left: auto; margin-right: auto; }
+.rank-chamber > .gold-button { display: flex; width: min(100%, 380px); margin: 18px auto 5px; min-height: 46px; }
+.rank-chamber > .text-link { font-size: 10px; margin-top: 10px; }
+.arena > .side-column { grid-column: auto; grid-template-columns: 1fr; }
+.celestial-orbit { position: absolute; left: 50%; top: 48%; border: 1px solid #ccb57635; border-radius: 50%; width: 330px; height: 330px; transform: translate(-50%, -50%); pointer-events: none; }
+.celestial-orbit:before, .celestial-orbit:after { content: ""; position: absolute; inset: 10px; border-radius: 50%; border: 1px dashed #d2b57630; }
+.celestial-orbit:after { inset: -9px; border-style: solid; border-color: #b99b5420; }
+.orbit-outer { animation: orbitTurn 80s linear infinite; }
+.orbit-inner { width: 265px; height: 265px; border-color: #dbbe6959; border-style: dotted; transform: translate(-50%, -50%) rotate(45deg); }
+.crest-rays { position: absolute; inset: -20px 0; pointer-events: none; background: repeating-conic-gradient(from 12deg at 50% 48%, transparent 0deg 18deg, #f6d48312 20deg, transparent 24deg 40deg); mask-image: radial-gradient(ellipse, #0002 16%, #000 24%, transparent 70%); }
+.rank-pedestal { position: absolute; bottom: 6%; left: 50%; width: 300px; height: 38px; transform: translateX(-50%); border: 1px solid #c5a66465; border-radius: 50%; background: radial-gradient(ellipse,#e8ce8740,transparent 67%); box-shadow: 0 0 35px #e5bc6620, inset 0 0 14px #c9a04725; }
+.forged-sockets { --star-step: 68px; --star-size: 54px; display: flex; align-items: center; justify-content: center; gap: calc(var(--star-step) - var(--star-size)); position: relative; width: max-content; max-width: 100%; margin: 8px auto; }
+.star-socket { display: block; width: var(--star-size); height: var(--star-size); flex: 0 0 var(--star-size); filter: drop-shadow(0 3px 2px #0009); }
+.forged-star { width: 100%; height: 100%; display: block; overflow: visible; }
+.forged-star.is-lit { filter: drop-shadow(0 0 4px #dca94b70) drop-shadow(0 2px 1px #634213); }
+.forged-star.is-empty { opacity: .65; }
+.king-count { font-family: Georgia,serif; font-size: 36px; color: #efd292; font-weight: 400; min-width: 80px; }
+
+/* Full-screen rank ceremony. All meaningful motion is driven by one pausable clock. */
+.game-dialog.settlement-dialog { width: 100vw; max-width: 100vw !important; height: 100dvh; max-height: 100dvh; top: 0; left: 0; transform: none; translate: none; animation: none; margin: 0; padding: 0; border: none; border-radius: 0; display: block; overflow-x: hidden; overflow-y: auto; background: radial-gradient(ellipse at 50% 40%, #263e5066, transparent 70%), linear-gradient(#030b16e8, #07111bd9), url('/art/lobby.png') center/cover !important; }
+.settlement-dialog > [data-slot="dialog-close"] { position: fixed; top: 23px; right: 24px; z-index: 5; color: #d6cbaa; padding: 9px; border: 1px solid #b6a26b33; background: #0a1528a0; }
+.rank-cinema { --ceremony-gold: #f2d58e; --star-step: 68px; position: relative; isolation: isolate; min-height: 100%; padding: 28px 32px 22px; text-align: center; overflow: hidden; }
+.cinema-grain { pointer-events: none; position: absolute; inset: 0; z-index: -1; opacity: .3; background-image: radial-gradient(#e2c99560 .6px,transparent .9px), radial-gradient(#b0d7e944 .5px,transparent .9px); background-size: 71px 83px, 113px 131px; background-position: 17px 37px, 61px 21px; mask-image: linear-gradient(transparent,#000 40%,transparent); }
+.cinema-header { display: flex; flex-direction: column; gap: 5px; color: #92a2b0; font-size: 10px; letter-spacing: 3px; }
+.cinema-header .eyebrow { color: #dfc185; letter-spacing: 5px; font-size: 10px; }
+.cinema-tools { display: flex; gap: 14px; justify-content: center; margin: 13px 0 6px; font-size: 10px; color: #a8b5bd; }
+.cinema-tools button { display: flex; gap: 6px; align-items: center; background: #15243680; border: 1px solid #c6af7225; padding: 5px 10px; border-radius: 2px; }
+.cinema-title { height: 64px; display: flex; align-items: center; flex-direction: column; justify-content: center; }
+.cinema-title span { font-family: "Songti SC",Georgia,serif; font-size: clamp(21px, 3.5vw, 32px); letter-spacing: 6px; color: #f2d7a0; text-shadow: 0 0 22px #e7c97640; }
+.cinema-title i { width: min(360px,80%); height: 1px; background: linear-gradient(90deg,transparent,#b99a5077,transparent); margin-top: 15px; }
+.ceremony-stage { position: relative; width: min(760px, 100%); margin: 0 auto; isolation: isolate; padding-top: 0; }
+.ceremony-stage > .celestial-orbit { top: 170px; }
+.ceremony-stage > .rank-pedestal { top: 300px; bottom: auto; }
+.ceremony-crest { height: 328px; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1; filter: drop-shadow(0 12px 12px #0008) drop-shadow(0 0 30px #b4c8dc40); }
+.ceremony-crest .crest { height: 356px !important; width: 356px !important; }
+.crest-demote { filter: saturate(.65) drop-shadow(0 0 28px #ae5f69aa); }
+.ceremony-rank-name { position: relative; z-index: 2; font-family: "Songti SC",Georgia,serif; font-size: clamp(40px,5.5vw,64px); line-height: 1.25; font-weight: 700; letter-spacing: 10px; color: #f1e2c6; text-shadow: 0 3px 1px #09141a, 0 0 35px #e4c78640; }
+.ceremony-sockets { --flight-height: 380px; margin: 18px auto 8px; min-height: 54px; z-index: 3; }
+.star-target { position: absolute; width: var(--star-size); height: var(--star-size); top: 0; transform: translateX(-50%); pointer-events: none; perspective: 700px; }
+.travelling-star { position: absolute; inset: 0; will-change: transform; transform-style: preserve-3d; }
+.travelling-star .forged-star { position: relative; z-index: 1; filter: drop-shadow(0 0 6px #fff5ca) drop-shadow(0 0 24px #eeb75e); }
+.meteor-trail { position: absolute; width: 15px; height: 175px; bottom: 45%; left: calc(50% - 7px); background: linear-gradient(to top, #fff5cd, #f6d28466 25%, transparent); filter: blur(4px); transform-origin: bottom; transform: rotate(-12deg); border-radius: 60% 60% 0 0; }
+.star-breaking .forged-star { filter: drop-shadow(0 0 15px #cf5d58); }
+.impact-ring { position: absolute; width: 80px; height: 80px; top: 50%; left: 50%; border: 2px solid #fff0b8; box-shadow: 0 0 8px #f4c35d, inset 0 0 12px #f4c35d; border-radius: 50%; }
+.impact-core { position: absolute; top: 50%; left: 50%; width: 135px; height: 135px; background: radial-gradient(circle, #fff9e3, #ffd07199 15%, #e3a63f44 33%,transparent 70%); mix-blend-mode: screen; }
+.forge-spark { position: absolute; left: 50%; top: 50%; width: 15px; height: 2px; border-radius: 90%; background: #ffe2a0; box-shadow: 0 0 8px #efb657; }
+.forge-spark.shard { width: 9px; height: 7px; border-radius: 0; background: linear-gradient(30deg,#cf665a,#f1c6a8); clip-path: polygon(0 0,100% 40%,30% 100%); }
+.cinema-loss .impact-ring { border-color: #e4a195; box-shadow: 0 0 8px #bd5955; }
+.cinema-loss .impact-core { background: radial-gradient(circle,#ffd5ca,#be645a55 18%,transparent 70%); }
+.cinema-loss .cinema-title span { color: #d6aaa5; }
+.cinema-event-label { min-height: 70px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; padding: 8px; }
+.cinema-event-label b { font-family: Georgia,serif; font-size: 36px; font-weight: 400; line-height: 1.15; color: #f4d288; text-shadow: 0 0 18px #efbc4840; }
+.cinema-event-label span { color: #afbdc8; font-size: 12px; max-width: 500px; line-height: 1.4; }
+.loss-label b { color: #d99c93; }
+.rank-transition-ribbon { position: absolute; top: 254px; left: 50%; width: max-content; max-width: 95%; transform: translateX(-50%); z-index: 2; padding: 9px 28px; background: linear-gradient(90deg,transparent,#182738ef 20%,#182738ef 80%,transparent); border-block: 1px solid #d3b67050; color: #efcd84; font-size: 12px; letter-spacing: 1px; }
+.rank-transition-ribbon span { margin: 0 16px; }
+.cinema-demotion .rank-transition-ribbon { color: #d7a0a0; border-color: #b8656940; }
+.cinema-note { color: #93a9b8; font-size: 10px; margin: 4px auto 12px; max-width: 530px; }
+.cinema-controls { max-width: 460px; margin: 20px auto 0; }
+.ceremony-progress { height: 2px; background: #ffffff15; overflow: hidden; }
+.ceremony-progress i { display: block; height: 100%; background: #dec187; box-shadow: 0 0 8px #d9bb7c; }
+.cinema-controls > div:last-child { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; gap: 18px; font-size: 11px; color: #9bacb9; }
+.cinema-controls button { border: 0; background: none; display: inline-flex; gap: 7px; align-items: center; }
+.cinema-readonly { display: block; font-size: 9px; letter-spacing: 1px; color: #667d8f; margin-top: 17px; }
+.cinema-final { max-width: 500px; margin: 0 auto; }
+.cinema-final > p { font-size: 11px; color: #a9b8c1; }
+.cinema-final > p > span { margin: 0 12px; color: #e4c37d; }
+.cinema-totals { display: flex; gap: 28px; justify-content: center; font-size: 11px; color: #90a0af; margin: 14px auto 18px; }
+.cinema-totals b { color: #dfc28b; font-family: Georgia,serif; font-size: 19px; font-weight: 400; margin-left: 4px; }
+.cinema-final .gold-button { min-width: 240px; }
+.cinema-final .event-ledger { margin-top: 14px; }
+.cinema-paused *, .cinema-paused *:before, .cinema-paused *:after { animation-play-state: paused !important; }
+.cinema-reduced .celestial-orbit, .cinema-reduced .crest-promote, .cinema-reduced .crest-demote { animation: none; }
+@keyframes orbitTurn { to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes crestBreathe { 50% { transform: translateY(-6px); filter: drop-shadow(0 18px 22px #0009) drop-shadow(0 0 38px #d8bd7455); } }
+@media (min-width: 1450px) {
+  .hero-rank-art { height: 360px; }
+  .hero-rank-art > .crest { width: 390px !important; height: 390px !important; }
+}
+@media (max-width: 720px) {
+  .arena { grid-template-columns: 1fr; gap: 28px; }
+  .arena > .rank-chamber { padding: 20px 8px 26px; }
+  .hero-rank-art { height: 280px; }
+  .hero-rank-art > .crest { width: 300px !important; height: 300px !important; }
+  .celestial-orbit { width: 280px; height: 280px; }
+  .orbit-inner { width: 220px; height: 220px; }
+  .rank-pedestal { width: 250px; }
+  .rank-chamber .season-tag { left: 10px; right: 10px; top: 12px; }
+  .rank-chamber h2 { font-size: 48px; letter-spacing: 9px; }
+  .lobby-top-compact h1 { font-size: 12px; letter-spacing: 0; }
+  .forged-sockets { --star-step: 58px; --star-size: 46px; }
+  .rank-cinema { padding: 22px 18px; }
+  .cinema-header { font-size: 9px; letter-spacing: 2px; padding-inline: 30px; }
+  .cinema-header .eyebrow { font-size: 8px; letter-spacing: 3px; }
+  .cinema-title span { font-size: 23px; letter-spacing: 3px; }
+  .ceremony-stage > .celestial-orbit { top: 143px; }
+  .ceremony-crest { height: 278px; }
+  .ceremony-crest .crest { width: 302px !important; height: 302px !important; }
+  .ceremony-stage > .rank-pedestal { top: 251px; }
+  .ceremony-rank-name { font-size: 46px; letter-spacing: 7px; }
+  .rank-transition-ribbon { top: 218px; font-size: 11px; padding: 7px 15px; }
+  .ceremony-sockets { --flight-height: 325px; }
+  .cinema-tools { margin-top: 10px; }
+  .cinema-event-label span { font-size: 11px; }
+  .cinema-controls { margin-top: 12px; }
+  .settlement-dialog > [data-slot="dialog-close"] { top: 16px; right: 10px; padding: 7px; }
+}
+@media (max-height: 760px) {
+  .rank-cinema { padding-top: 18px; }
+  .cinema-title { height: 50px; }
+  .ceremony-crest { height: 235px; }
+  .ceremony-crest .crest { width: 280px !important; height: 280px !important; }
+  .ceremony-stage > .celestial-orbit { top: 118px; width: 245px; height: 245px; }
+  .ceremony-stage > .orbit-inner { width: 200px; height: 200px; }
+  .ceremony-stage > .rank-pedestal { top: 215px; width: 235px; }
+  .rank-transition-ribbon { top: 185px; }
+  .ceremony-rank-name { font-size: 46px; }
+  .ceremony-sockets { --flight-height: 260px; --star-size: 44px; --star-step: 56px; min-height: 44px; margin-top: 12px; }
+  .cinema-event-label { min-height: 56px; }
+  .cinema-event-label b { font-size: 30px; }
+  .cinema-totals { margin: 10px auto 12px; }
+  .cinema-tools { margin-block: 8px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-rank-art > .crest, .celestial-orbit, .crest-promote, .crest-demote, .rank-transition-ribbon { animation: none; }
+  .travelling-star, .forge-spark, .impact-core, .impact-ring { display: none; }
 }

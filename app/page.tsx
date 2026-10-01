@@ -66,24 +66,14 @@ import {
   type Block,
 } from "@/lib/game";
 
+import { Crest, RankStars } from "@/components/rank-art";
+import { RankCeremony } from "@/components/rank-ceremony";
+import { entryReplay } from "@/lib/ceremony";
+
 type Modal = "day" | "rules" | "focus" | "ranks" | "data" | "settlement" | null;
 const uid = () => crypto.randomUUID();
 const sign = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 const hobbyIcons = [Guitar, Languages, BookOpen, Dumbbell];
-function Crest({ index = 0, size = 100 }: { index?: number; size?: number }) {
-  return (
-    <div
-      role="img"
-      aria-label={`${RANKS[index].name}段位徽章`}
-      className="crest"
-      style={{
-        width: size,
-        height: size,
-        backgroundPosition: `${((index % 4) * 100) / 3}% ${index < 4 ? 0 : 100}%`,
-      }}
-    />
-  );
-}
 function download(name: string, data: unknown) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(
@@ -107,11 +97,10 @@ export default function Page() {
     [tab, setTab] = useState("study"),
     [plans, setPlans] = useState<{ date: string; blocks: Block[] }[]>([]),
     [planSync, setPlanSync] = useState("");
-  const [sound, setSound] = useState(false),
+  const [sound, setSound] = useState(true),
     [now, setNow] = useState(Date.now()),
     [result, setResult] = useState<Result | null>(null),
-    [eventIndex, setEventIndex] = useState(-1),
-    [playing, setPlaying] = useState(false),
+    [welcomeReplay, setWelcomeReplay] = useState(false),
     [isReplay, setIsReplay] = useState(false),
     [range, setRange] = useState(30),
     [usageText, setUsageText] = useState(""),
@@ -121,7 +110,7 @@ export default function Page() {
     [recovery, setRecovery] = useState<GameState | null>(null);
   const versionRef = useRef(0),
     busyRef = useRef(false),
-    audioRef = useRef<AudioContext | null>(null),
+    entryPlayedRef = useRef(false),
     importRef = useRef<HTMLInputElement>(null),
     planRef = useRef<HTMLInputElement>(null);
   const results = replay(state.days),
@@ -161,6 +150,16 @@ export default function Page() {
       );
       setLoaded(true);
       setDirty(false);
+      if (!entryPlayedRef.current) {
+        entryPlayedRef.current = true;
+        const previous = entryReplay(replay(x.state.days), shiftDay(d, -1));
+        if (previous) {
+          setResult(previous);
+          setIsReplay(true);
+          setWelcomeReplay(true);
+          setModal("settlement");
+        }
+      }
     } catch (e) {
       setError(String((e as Error).message));
     }
@@ -178,7 +177,7 @@ export default function Page() {
         if (x.syncedAt) setPlanSync(x.syncedAt);
       })
       .catch(() => {});
-    setSound(localStorage.getItem("sisyphus-sound") === "1");
+    setSound(localStorage.getItem("sisyphus-sound") !== "0");
     try {
       const s = localStorage.getItem("sisyphus-unsaved");
       if (s) setRecovery(JSON.parse(s));
@@ -192,45 +191,6 @@ export default function Page() {
     if (dirty && loaded)
       localStorage.setItem("sisyphus-unsaved", JSON.stringify(assembled()));
   }, [day, dirty, state, loaded]);
-  const tone = (positive: boolean) => {
-    if (!sound) return;
-    try {
-      const ac = audioRef.current ?? new AudioContext();
-      audioRef.current = ac;
-      void ac.resume();
-      const o = ac.createOscillator(),
-        g = ac.createGain();
-      o.type = "sine";
-      o.frequency.setValueAtTime(positive ? 660 : 220, ac.currentTime);
-      o.frequency.exponentialRampToValueAtTime(
-        positive ? 990 : 110,
-        ac.currentTime + 0.25,
-      );
-      g.gain.setValueAtTime(0.08, ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.45);
-      o.connect(g);
-      g.connect(ac.destination);
-      o.start();
-      o.stop(ac.currentTime + 0.45);
-    } catch {}
-  };
-  useEffect(() => {
-    if (!playing || !result) return;
-    const id = setTimeout(
-      () => {
-        setEventIndex((i) => {
-          if (i + 1 >= result.events.length) {
-            setPlaying(false);
-            return result.events.length;
-          }
-          tone(result.events[i + 1].delta > 0);
-          return i + 1;
-        });
-      },
-      eventIndex < 0 ? 550 : result.events[eventIndex]?.promotion ? 1500 : 850,
-    );
-    return () => clearTimeout(id);
-  }, [playing, eventIndex, result]);
   const persist = async (next: GameState) => {
     if (busyRef.current) return false;
     busyRef.current = true;
@@ -321,16 +281,14 @@ export default function Page() {
     if (await persist(ns)) {
       setDay(next);
       setResult(res);
-      setEventIndex(-1);
-      setPlaying(true);
+      setWelcomeReplay(false);
       setIsReplay(false);
       setModal("settlement");
     }
   };
   const replayResult = (r: Result) => {
     setResult(r);
-    setEventIndex(-1);
-    setPlaying(true);
+    setWelcomeReplay(false);
     setIsReplay(true);
     setModal("settlement");
   };
@@ -571,12 +529,12 @@ export default function Page() {
         </div>
       </header>
       <div className="lobby">
-        <div className="lobby-top">
+        <div className={`lobby-top ${view === "lobby" ? "lobby-top-compact" : ""}`}>
           <div>
             <span className="eyebrow">THE ASCENT · 你的第一赛季</span>
             <h1>
               {view === "lobby"
-                ? "把今天，打成一场胜仗。"
+                ? "每一颗星，都是你拿回的时间。"
                 : view === "history"
                   ? "每一步，都有迹可循。"
                   : "从废铁出发，向王者进发。"}
@@ -677,8 +635,12 @@ export default function Page() {
                 <div className="season-tag">
                   S01 <span>{rank.subtitle}</span>
                 </div>
-                <div className="rank-art">
-                  <Crest index={rank.index} size={218} />
+                <div className="rank-art hero-rank-art">
+                  <div className="celestial-orbit orbit-outer" aria-hidden="true" />
+                  <div className="celestial-orbit orbit-inner" aria-hidden="true" />
+                  <div className="crest-rays" aria-hidden="true" />
+                  <div className="rank-pedestal" aria-hidden="true" />
+                  <Crest index={rank.index} size={380} />
                 </div>
                 <span className="eyebrow">
                   {rank.index === 0
@@ -686,18 +648,8 @@ export default function Page() {
                     : "THE ASCENT CONTINUES"}
                 </span>
                 <h2>{rank.label}</h2>
-                <div className="rank-stars" aria-label={`${rank.filled} 颗星`}>
-                  {rank.index === 7 ? (
-                    <span className="lit">★ {rank.filled}</span>
-                  ) : (
-                    Array.from({ length: rank.stars }, (_, i) => (
-                      <span className={i < rank.filled ? "lit" : ""} key={i}>
-                        {i < rank.filled ? "★" : "☆"}
-                      </span>
-                    ))
-                  )}
-                </div>
-                <p>每一颗星，都是你拿回的时间。</p>
+                <RankStars score={score} />
+                <p className="hero-score">累计 <b>{score}</b> 颗段位星 · {last ? `最近结算 ${last.date}` : "征程尚未开始"}</p>
                 <div className="next-rank">
                   <span>
                     {rank.index === 7
@@ -728,25 +680,8 @@ export default function Page() {
                     const r = results.find((r) => r.date === day.date);
                     if (r) replayResult(r);
                     else {
-                      setResult({
-                        ...preview,
-                        events: preview.events.length
-                          ? preview.events
-                          : [
-                              {
-                                label: "演示 · 完成学习",
-                                delta: 1,
-                                before: 0,
-                                after: 1,
-                                type: "study",
-                                promotion: false,
-                                demotion: false,
-                              },
-                            ],
-                        after: preview.events.length ? preview.after : 1,
-                      });
-                      setEventIndex(-1);
-                      setPlaying(true);
+                      setResult(preview);
+                      setWelcomeReplay(false);
                       setIsReplay(true);
                       setModal("settlement");
                     }
@@ -1183,14 +1118,14 @@ export default function Page() {
         onOpenChange={(o) => {
           if (!o) {
             setModal(null);
-            setPlaying(false);
           }
         }}
       >
         <DialogContent
+          onInteractOutside={(event) => { if (modal === "settlement") event.preventDefault(); }}
           className={`game-dialog ${modal === "settlement" ? "settlement-dialog" : modal === "focus" ? "focus-dialog" : ""}`}
         >
-          <DialogTitle>
+          <DialogTitle className={modal === "settlement" ? "sr-only" : undefined}>
             {modal === "day"
               ? `${day.date} · 每日排位`
               : modal === "rules"
@@ -1205,7 +1140,7 @@ export default function Page() {
                         ? "战报回放"
                         : "每日结算"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={modal === "settlement" ? "sr-only" : undefined}>
             {modal === "day"
               ? "记录实际完成的行为。星星在结算时统一发放。"
               : modal === "rules"
@@ -2076,140 +2011,8 @@ export default function Page() {
             </div>
           )}
           {modal === "settlement" && result && (
-            <div
-              className={`settlement-content ${eventIndex >= 0 && eventIndex < result.events.length && result.events[eventIndex].delta < 0 ? "loss" : "win"}`}
-            >
-              <span className="eyebrow">
-                {result.date} · {isReplay ? "REPLAY" : "MATCH COMPLETE"}
-              </span>
-              {eventIndex < result.events.length ? (
-                <>
-                  <Crest
-                    index={
-                      rankAt(
-                        eventIndex < 0
-                          ? result.before
-                          : result.events[eventIndex].after,
-                      ).index
-                    }
-                    size={190}
-                  />
-                  <div
-                    key={eventIndex}
-                    className="star-burst"
-                    aria-live="polite"
-                  >
-                    {eventIndex < 0
-                      ? "✦"
-                      : result.events[eventIndex].delta > 0
-                        ? "+1 ★"
-                        : "−1 ★"}
-                  </div>
-                  <h2>
-                    {eventIndex < 0
-                      ? "你的每一分努力，即将点亮。"
-                      : result.events[eventIndex].label}
-                  </h2>
-                  {eventIndex >= 0 && (
-                    <>
-                      <p className="event-rank">
-                        {rankAt(result.events[eventIndex].after).label} ·{" "}
-                        {rankAt(result.events[eventIndex].after).filled} ★
-                      </p>
-                      {result.events[eventIndex].promotion && (
-                        <div className="promotion-banner">
-                          ✦ 晋级 ·{" "}
-                          {rankAt(result.events[eventIndex].after).label} ✦
-                        </div>
-                      )}
-                      {result.events[eventIndex].demotion && (
-                        <div className="demotion-banner">
-                          段位回落 · 下一局再赢回来
-                        </div>
-                      )}
-                      {result.events[eventIndex].before === 0 &&
-                        result.events[eventIndex].delta < 0 && (
-                          <p>底分保护 · 已记录扣星，不产生负债</p>
-                        )}
-                      {result.events[eventIndex].type === "streak" && (
-                        <div className="promotion-banner">
-                          {result.streak} DAYS · 连胜爆发
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Crest index={rankAt(result.after).index} size={190} />
-                  <h2 className="settled-title">
-                    {result.perfect
-                      ? "完美一天"
-                      : result.net > 0
-                        ? "向上，再一步"
-                        : result.net < 0
-                          ? "明天，重新出发"
-                          : "每一步都算数"}
-                  </h2>
-                  <div className="final-score">{sign(result.applied)} ★</div>
-                  <p>
-                    {rankAt(result.before).label} → {rankAt(result.after).label}
-                  </p>
-                  <div className="settlement-totals">
-                    <span>
-                      获得 <b>+{result.gained}</b>
-                    </span>
-                    <span>
-                      扣除 <b>{result.lost ? `−${result.lost}` : "0"}</b>
-                    </span>
-                  </div>
-                  {result.rewardOnlyReason && <p className="gold-text">✦ {result.rewardOnlyReason}</p>}
-                  {result.shieldUsed && (
-                    <p className="gold-text">◇ 护盾已消耗 · 连胜守住了</p>
-                  )}
-                  <button
-                    className="gold-button"
-                    onClick={() => setModal(null)}
-                  >
-                    收下今天，继续攀登
-                  </button>
-                  <details className="event-ledger">
-                    <summary>逐星明细 · {result.events.length} 颗</summary>
-                    {result.events.map((e, i) => (
-                      <div key={i}>
-                        <span>{e.label}</span>
-                        <b>{sign(e.delta)} ★</b>
-                      </div>
-                    ))}
-                  </details>
-                </>
-              )}
-              {eventIndex < result.events.length && (
-                <div className="playback-controls">
-                  <span>
-                    {Math.max(0, eventIndex + 1)} / {result.events.length}
-                  </span>
-                  <button
-                    className="outline-button"
-                    onClick={() => setPlaying(!playing)}
-                  >
-                    {playing ? <Pause size={14} /> : <Play size={14} />}
-                    {playing ? "暂停" : "播放"}
-                  </button>
-                  <button
-                    className="outline-button"
-                    onClick={() => {
-                      setPlaying(false);
-                      setEventIndex((i) =>
-                        Math.min(result.events.length, i + 1),
-                      );
-                    }}
-                  >
-                    下一颗
-                  </button>
-                </div>
-              )}
-            </div>
+            <RankCeremony result={result} replay={isReplay} welcome={welcomeReplay}
+              sound={sound} onSoundToggle={soundToggle} onClose={() => setModal(null)} />
           )}
         </DialogContent>
       </Dialog>
