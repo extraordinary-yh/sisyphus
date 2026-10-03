@@ -78,6 +78,11 @@ const day = z
     rewardOnlyReason: z.string().trim().min(1).max(300).optional(),
     studySession: z.object({ id, studyDate: date, planDate: date }).optional(),
     productiveMinutes: z.number().int().min(0).max(1440).nullable().optional(),
+    interviewAdvances: z.array(z.object({
+      id,
+      title: label,
+      evidence: z.string().trim().min(1).max(1200),
+    })).max(10).refine(unique, "同一面试晋级不能重复奖励").optional(),
   })
   .refine(
     (d) => !d.settled || canSettle(d),
@@ -90,7 +95,8 @@ export const stateSchema = z.object({
     .refine(
       (v) => new Set(v.map((d) => d.date)).size === v.length,
       "同一天不能重复记录",
-    ),
+    )
+    .refine(v => unique(v.flatMap(d => d.interviewAdvances ?? [])), "同一面试晋级不能在多天重复奖励"),
   rules,
   focus: z
     .object({
