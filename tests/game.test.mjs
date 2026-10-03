@@ -296,3 +296,49 @@ test('new reward applies at every rank while legacy days retain Diamond pairing'
   assert.equal(canSettle(draft), false);
   assert.deepEqual(replay([...ds, draft]), replay(ds));
 });
+
+test('interview advancement reaches the next subdivision after ordinary losses, without fabricated completion', () => {
+  const seed = day('2026-01-01', 2);
+  seed.rules = {mode:'gradient',streak:false,shield:false};
+  const d = day('2026-01-02', 0);
+  d.usage=[{id:'video',name:'Video',seconds:14400,category:'video'}];
+  d.interviewAdvances=[{id:'interview-round-1',title:'Company · round one',evidence:'Confirmed next round'}];
+  const original=structuredClone(d);
+  const r=replay([seed,d])[1];
+  assert.equal(r.before,2);
+  assert.equal(r.lost,4);
+  assert.equal(r.gained,3);
+  assert.equal(r.net,-1);
+  assert.equal(r.applied,1);
+  assert.equal(r.after,3);
+  assert.equal(rankAt(r.after).label,'废铁 Ⅱ');
+  assert.equal(r.perfect,false);
+  assert.deepEqual(d,original);
+  assert.equal(r.events.at(-1).type,'interview');
+  assert.equal(r.events.at(-1).promotion,true);
+  assert.deepEqual(replay([seed,d]),replay([d,seed]));
+});
+test('interview rewards deduplicate stable IDs, ignore drafts, and recalculate corrections', () => {
+  const a=day('2026-01-01',0),b=day('2026-01-02',0);
+  a.interviewAdvances=[{id:'same-round',title:'Company · round one',evidence:'Confirmed'}];
+  b.interviewAdvances=structuredClone(a.interviewAdvances);
+  assert.deepEqual(replay([a,b]).map(r=>r.gained),[3,0]);
+  assert.equal(replay([{...a,settled:false},b])[0].gained,3);
+  assert.equal(replay([{...a,interviewAdvances:[]},{...b,interviewAdvances:[]}]).at(-1).after,0);
+  b.interviewAdvances=[{id:'next-round',title:'Company · round two',evidence:'Confirmed next round'}];
+  assert.deepEqual(replay([a,b]).map(r=>r.after),[3,6]);
+  assert.equal(canSettle({...a,bedtime:''}),false);
+});
+test('one-subdivision reward respects unequal tier widths, tier crossings and the King ceiling', async () => {
+  const {nextDivisionScore}=await import('../lib/game.ts');
+  for(const [score,target] of [[0,3],[2,3],[6,9],[26,27],[27,31],[42,43],[58,59],[59,64],[108,109],[109,109],[150,150]]){
+    assert.equal(nextDivisionScore(score),target);
+    const prefix=[];let remaining=score,offset=0;
+    while(remaining){const count=Math.min(20,remaining);const d=day(shiftDay('2026-01-01',offset++),count);d.rules={mode:'gradient',streak:false,shield:false,studyReward:'time-or-blocks'};prefix.push(d);remaining-=count;}
+    const d=day(shiftDay('2026-01-01',offset),0);
+    d.interviewAdvances=[{id:'confirmed-round',title:'Company · passed round',evidence:'Confirmed'}];
+    const result=replay([...prefix,d]).at(-1);
+    assert.equal(result.after,target);
+    assert.equal(result.gained,target-score);
+  }
+});

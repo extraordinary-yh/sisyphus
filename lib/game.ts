@@ -52,6 +52,7 @@ export type Day = {
   rewardOnlyReason?: string;
   studySession?: { id: string; studyDate: string; planDate: string };
   productiveMinutes?: number | null;
+  interviewAdvances?: { id: string; title: string; evidence: string }[];
 };
 export type Focus = {
   id: string;
@@ -77,7 +78,7 @@ export type StarEvent = {
   delta: number;
   before: number;
   after: number;
-  type: "study" | "hobby" | "streak" | "video" | "sleep";
+  type: "study" | "hobby" | "streak" | "video" | "sleep" | "interview";
   promotion: boolean;
   demotion: boolean;
 };
@@ -154,6 +155,10 @@ export function entertainmentSeconds(day: Day) {
     .filter((u) => u.category !== "excluded")
     .reduce((s, u) => s + u.seconds, 0);
 }
+export function nextDivisionScore(score: number) {
+  const rank = rankAt(score);
+  return rank.needed === null ? score : score + rank.needed;
+}
 export function videoPenalty(
   seconds: number,
   mode: Rules["mode"] = "gradient",
@@ -228,6 +233,7 @@ export function replay(days: Day[]): Result[] {
     shields = 0,
     previous = "";
   const results: Result[] = [];
+  const awardedInterviews = new Set<string>();
   for (const day of [...days]
     .filter((d) => d.settled)
     .sort((a, b) => a.date.localeCompare(b.date))) {
@@ -305,6 +311,13 @@ export function replay(days: Day[]): Result[] {
       "video",
     );
     if (sleep < 0) add(`晚睡 · ${day.bedtime}`, sleep, "sleep");
+    // Apply after ordinary rewards/losses so a confirmed advance earns one
+    // subdivision from the resulting rank. Stable IDs prevent replay duplicates.
+    for (const interview of day.interviewAdvances ?? []) {
+      if (awardedInterviews.has(interview.id)) continue;
+      awardedInterviews.add(interview.id);
+      add(`面试晋级 · ${interview.title} · 升一小段`, nextDivisionScore(total) - total, "interview");
+    }
     const gained = events.filter((e) => e.delta > 0).length,
       lost = events.filter((e) => e.delta < 0).length;
     results.push({

@@ -33,6 +33,16 @@ try{
  assert.equal((await call('PUT',{version:timedRead.body.version,state:badTime})).status,400);
  const badRule=structuredClone(timed);badRule.days.find(x=>x.date===date).rules.studyReward='unknown';
  assert.equal((await call('PUT',{version:timedRead.body.version,state:badRule})).status,400);
+ const promoted=structuredClone(timed);const promotedDay=promoted.days.find(x=>x.date===date);
+ promotedDay.interviewAdvances=[{id:'qa-confirmed-round',title:'Synthetic company · round one',evidence:'Synthetic next-round confirmation'}];
+ const promotionSave=await call('PUT',{version:timedRead.body.version,state:promoted});assert.equal(promotionSave.status,200);
+ const promotionRead=await call();assert.deepEqual(promotionRead.body.state,promoted);
+ const promotionResult=promotionRead.body.results.find(x=>x.date===date);
+ assert.equal(promotionResult.after,6);assert.equal(promotionResult.events.filter(x=>x.type==='interview').length,3);
+ const noEvidence=structuredClone(promoted);noEvidence.days.find(x=>x.date===date).interviewAdvances[0].evidence='';
+ assert.equal((await call('PUT',{version:promotionRead.body.version,state:noEvidence})).status,400);
+ const duplicateAward=structuredClone(promoted);duplicateAward.days.push({...newDay('2020-01-02'),interviewAdvances:structuredClone(promotedDay.interviewAdvances)});
+ assert.equal((await call('PUT',{version:promotionRead.body.version,state:duplicateAward})).status,400);
  const dupe=structuredClone(state);dupe.days.push(d);assert.equal((await call('PUT',{version:read.body.version,state:dupe})).status,400);
  const unauth=await fetch(base+'/api/state');assert.equal(unauth.status,401);
  console.log('API smoke passed: authenticated persistence, time-or-blocks round-trip/scoring, invalid time/rule rejection, per-star ledger, stale-write rejection, invalid settlement, duplicate date, cross-origin rejection, unauthenticated denial.');

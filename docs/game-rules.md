@@ -27,4 +27,6 @@ A day can carry an explicitly requested `rewardOnlyReason` exception. That day's
 
 Completed session records can preserve a separate `studySession` source (session ID, study date and original plan date) alongside the chosen settlement date. Unknown block minutes remain `null`; estimated durations use `minutesRange` without inventing a precise duration. Neither changes the block-based reward.
 
+Confirmed interview advancement: record each explicit “advance to next round” confirmation once, on its confirmation date, with a stable ID, company/round title, and evidence. After that day's ordinary rewards and deductions, each advancement moves the resulting score to the next subdivision's entry (for example, Iron III → Iron II at zero filled stars). At subdivision I this crosses into the next tier's lowest subdivision. King has no subdivisions, so no further subdivision reward is applied. Interview rewards retain per-star events for replay, never mark study work completed or relax settlement/perfect-day requirements. Duplicate IDs across days are rejected; replay also guards against duplicate awards. Removing or correcting an award recalculates subsequent results chronologically.
+
 See [`lib/game.ts`](../lib/game.ts) for the authoritative implementation and [`tests/game.test.mjs`](../tests/game.test.mjs) for boundary cases.
