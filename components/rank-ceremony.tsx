@@ -9,14 +9,15 @@ const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const ease = (n: number) => 1 - (1-clamp(n)) ** 3;
 const signed = (n: number) => n > 0 ? `+${n}` : String(n);
 
-export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, onClose, initialPlayback }: {
-  result: Result; replay: boolean; welcome: boolean; sound: boolean; onSoundToggle: () => void; onClose: () => void; initialPlayback?: Playback;
+export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, onClose, initialPlayback, onFinished, closeLabel }: {
+  result: Result; replay: boolean; welcome: boolean; sound: boolean; onSoundToggle: () => void; onClose: () => void; initialPlayback?: Playback; onFinished?: () => void; closeLabel?: string;
 }) {
   const [cursor, setCursor] = useState<Playback>(initialPlayback ?? { index: -1, elapsed: 0 });
   const [paused, setPaused] = useState(!!initialPlayback), [speed, setSpeed] = useState(1);
   const [reduced, setReduced] = useState(false), [audioReady, setAudioReady] = useState(false);
   const engine = useRef<ForgeAudio | null>(null), cues = useRef(new Set<string>());
   const finished = cursor.index >= result.events.length;
+  useEffect(() => { if (finished) onFinished?.(); }, [finished, onFinished]);
   const event = cursor.index >= 0 && !finished ? result.events[cursor.index] : null;
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
@@ -133,7 +134,7 @@ export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, on
       <div className="cinema-totals"><span>获得 <b>+{result.gained}</b></span><span>扣除 <b>{result.lost ? `−${result.lost}` : 0}</b></span><span>累计 <b>{result.after}</b></span></div>
       {result.rewardOnlyReason && <p className="cinema-note">{result.rewardOnlyReason}</p>}
       {result.shieldUsed && <p className="cinema-note">连胜护盾生效 · 连胜保留</p>}
-      <button className="gold-button" onClick={onClose}>收下星光，继续攀登</button>
+      <button className="gold-button" onClick={onClose}>{closeLabel ?? "收下星光，继续攀登"}</button>
       <details className="event-ledger"><summary>逐星明细 · {result.events.length} 颗</summary>{result.events.map((e,i)=><div key={i}><span>{e.label}</span><b>{signed(e.delta)} ★</b></div>)}</details>
     </div> : <div className="cinema-controls">
       <div className="ceremony-progress" role="progressbar" aria-label="结算演出进度" aria-valuemin={0} aria-valuemax={result.events.length} aria-valuenow={Math.max(0,cursor.index)}><i style={{width:`${(Math.max(0,cursor.index + cursor.elapsed / duration)/Math.max(1,result.events.length))*100}%`}}/></div>

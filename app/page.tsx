@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Swords,
   Shield,
@@ -68,6 +68,8 @@ import {
 
 import { Crest, RankStars } from "@/components/rank-art";
 import { RankCeremony } from "@/components/rank-ceremony";
+import { SettlementPlaylist } from "@/components/settlement-playlist";
+import { WATCHED_KEY, readWatched, settlementFingerprint, settlementPlaylist, type WatchedSettlements } from "@/lib/settlement-replay";
 import { entryReplay } from "@/lib/ceremony";
 
 type Modal = "day" | "rules" | "focus" | "ranks" | "data" | "settlement" | null;
@@ -108,6 +110,18 @@ export default function Page() {
   const [focusChoice, setFocusChoice] = useState("study:"),
     [focusMinutes, setFocusMinutes] = useState(30),
     [recovery, setRecovery] = useState<GameState | null>(null);
+  const [playlist, setPlaylist] = useState<Result[]>([]), [watched, setWatched] = useState<WatchedSettlements>({}),
+    [replayStart, setReplayStart] = useState(""), [replayEnd, setReplayEnd] = useState("");
+  const markWatched = useCallback((r: Result) => {
+    setWatched(previous => {
+      const fingerprint = settlementFingerprint(r);
+      if (previous[r.date] === fingerprint) return previous;
+      const next = { ...previous, [r.date]: fingerprint };
+      try { localStorage.setItem(WATCHED_KEY, JSON.stringify(next)); } catch { /* Playback remains available when storage is full. */ }
+      return next;
+    });
+  }, []);
+  const closePlaylist = useCallback(() => { setPlaylist([]); setModal(null); }, []);
   const versionRef = useRef(0),
     busyRef = useRef(false),
     entryPlayedRef = useRef(false),
@@ -141,6 +155,9 @@ export default function Page() {
       };
       if (!r.ok) throw new Error(x.error);
       setState(x.state);
+      let savedWatched: WatchedSettlements = {};
+      try { savedWatched = readWatched(localStorage.getItem(WATCHED_KEY)); } catch {}
+      setWatched(savedWatched);
       setVersion(x.version);
       versionRef.current = x.version;
       const d = today();
@@ -153,7 +170,7 @@ export default function Page() {
       if (!entryPlayedRef.current) {
         entryPlayedRef.current = true;
         const previous = entryReplay(replay(x.state.days), shiftDay(d, -1));
-        if (previous) {
+        if (previous && settlementPlaylist(replay(x.state.days), "", "9999-12-31", savedWatched).length <= 1) {
           setResult(previous);
           setIsReplay(true);
           setWelcomeReplay(true);
@@ -272,6 +289,7 @@ export default function Page() {
       edit("usage");
       return;
     }
+    setPlaylist([]);
     const next = { ...day, settled: true };
     const ns = {
       ...state,
@@ -286,7 +304,12 @@ export default function Page() {
       setModal("settlement");
     }
   };
+  const playBatch = (items: Result[]) => {
+    if (!items.length) { toast.info("所选日期没有已结算战报"); return; }
+    setPlaylist(items); setResult(items[0]); setIsReplay(true); setWelcomeReplay(false); setModal("settlement");
+  };
   const replayResult = (r: Result) => {
+    setPlaylist([]);
     setResult(r);
     setWelcomeReplay(false);
     setIsReplay(true);
@@ -528,6 +551,16 @@ export default function Page() {
           <b className="avatar">S</b>
         </div>
       </header>
+      {loaded && results.length > 0 && <section className="batch-replay-panel" aria-label="结算逐日回放">
+        <div><strong>补结算也能逐日见证</strong><p>依次播放每天的加减星和段位变化，回放不会修改战绩。</p></div>
+        <button className="gold-button" onClick={() => playBatch(settlementPlaylist(results, "", "9999-12-31", watched))}
+          disabled={!settlementPlaylist(results, "", "9999-12-31", watched).length}>连播未回顾 · {settlementPlaylist(results, "", "9999-12-31", watched).length} 天</button>
+        <details><summary>选择日期区间重播</summary><div className="playlist-range">
+          <label>开始日期<input type="date" value={replayStart || results[0]?.date || ""} max={replayEnd || last?.date} onInput={e => setReplayStart(e.currentTarget.value)} /></label>
+          <label>结束日期<input type="date" value={replayEnd || last?.date || ""} min={replayStart || results[0]?.date} max={today()} onInput={e => setReplayEnd(e.currentTarget.value)} /></label>
+          <button className="outline-button" onClick={() => playBatch(settlementPlaylist(results, replayStart || results[0]?.date, replayEnd || last?.date))}>按日期连播</button>
+        </div></details>
+      </section>}
       <div className="lobby">
         <div className={`lobby-top ${view === "lobby" ? "lobby-top-compact" : ""}`}>
           <div>
@@ -1117,6 +1150,7 @@ export default function Page() {
         open={modal !== null}
         onOpenChange={(o) => {
           if (!o) {
+            setPlaylist([]);
             setModal(null);
           }
         }}
@@ -2040,8 +2074,8 @@ export default function Page() {
             </div>
           )}
           {modal === "settlement" && result && (
-            <RankCeremony result={result} replay={isReplay} welcome={welcomeReplay}
-              sound={sound} onSoundToggle={soundToggle} onClose={() => setModal(null)} />
+            playlist.length ? <SettlementPlaylist results={playlist} sound={sound} onSoundToggle={soundToggle} onWatched={markWatched} onClose={closePlaylist} /> : <RankCeremony key={result.date} result={result} replay={isReplay} welcome={welcomeReplay}
+              sound={sound} onSoundToggle={soundToggle} onFinished={() => markWatched(result)} onClose={() => setModal(null)} />
           )}
         </DialogContent>
       </Dialog>
