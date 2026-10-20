@@ -1725,3 +1725,14 @@ input.number-input {
   .hero-rank-art > .crest, .celestial-orbit, .crest-promote, .crest-demote, .rank-transition-ribbon { animation: none; }
   .travelling-star, .forge-spark, .impact-core, .impact-ring { display: none; }
 }
+
+.playlist-range,.playlist-toolbar>div { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-top:12px; }
+.playlist-range label { display:grid; gap:6px; }
+.playlist-range input { color-scheme:dark; padding:9px; border:1px solid #b89c6055; border-radius:6px; background:#141519; color:#eee; }
+.playlist-toolbar { padding:18px 24px; background:#15161b; border-bottom:1px solid #b89c6044; }
+.playlist-toolbar small { display:block; }
+
+.replay-picker { padding-top:16px; }
+.replay-picker h3 { margin-top:24px; }
+
+.range-buttons .playlist-launch { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
