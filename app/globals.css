@@ -1726,11 +1726,13 @@ input.number-input {
   .travelling-star, .forge-spark, .impact-core, .impact-ring { display: none; }
 }
 
-.batch-replay-panel { display:flex; align-items:center; flex-wrap:wrap; gap:16px; margin:20px 0; padding:20px; border:1px solid #b89c6044; border-radius:16px; background:#15161bd9; }
-.batch-replay-panel p,.playlist-toolbar small { color:#b5b2a8; font-size:13px; margin:6px 0; }
-.batch-replay-panel details { flex-basis:100%; }
 .playlist-range,.playlist-toolbar>div { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-top:12px; }
 .playlist-range label { display:grid; gap:6px; }
 .playlist-range input { color-scheme:dark; padding:9px; border:1px solid #b89c6055; border-radius:6px; background:#141519; color:#eee; }
 .playlist-toolbar { padding:18px 24px; background:#15161b; border-bottom:1px solid #b89c6044; }
 .playlist-toolbar small { display:block; }
+
+.replay-picker { padding-top:16px; }
+.replay-picker h3 { margin-top:24px; }
+
+.range-buttons .playlist-launch { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }

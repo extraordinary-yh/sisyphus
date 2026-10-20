@@ -72,7 +72,7 @@ import { SettlementPlaylist } from "@/components/settlement-playlist";
 import { WATCHED_KEY, readWatched, settlementFingerprint, settlementPlaylist, type WatchedSettlements } from "@/lib/settlement-replay";
 import { entryReplay } from "@/lib/ceremony";
 
-type Modal = "day" | "rules" | "focus" | "ranks" | "data" | "settlement" | null;
+type Modal = "day" | "rules" | "focus" | "ranks" | "data" | "settlement" | "replay-picker" | null;
 const uid = () => crypto.randomUUID();
 const sign = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 const hobbyIcons = [Guitar, Languages, BookOpen, Dumbbell];
@@ -551,16 +551,6 @@ export default function Page() {
           <b className="avatar">S</b>
         </div>
       </header>
-      {loaded && results.length > 0 && <section className="batch-replay-panel" aria-label="结算逐日回放">
-        <div><strong>补结算也能逐日见证</strong><p>依次播放每天的加减星和段位变化，回放不会修改战绩。</p></div>
-        <button className="gold-button" onClick={() => playBatch(settlementPlaylist(results, "", "9999-12-31", watched))}
-          disabled={!settlementPlaylist(results, "", "9999-12-31", watched).length}>连播未回顾 · {settlementPlaylist(results, "", "9999-12-31", watched).length} 天</button>
-        <details><summary>选择日期区间重播</summary><div className="playlist-range">
-          <label>开始日期<input type="date" value={replayStart || results[0]?.date || ""} max={replayEnd || last?.date} onInput={e => setReplayStart(e.currentTarget.value)} /></label>
-          <label>结束日期<input type="date" value={replayEnd || last?.date || ""} min={replayStart || results[0]?.date} max={today()} onInput={e => setReplayEnd(e.currentTarget.value)} /></label>
-          <button className="outline-button" onClick={() => playBatch(settlementPlaylist(results, replayStart || results[0]?.date, replayEnd || last?.date))}>按日期连播</button>
-        </div></details>
-      </section>}
       <div className="lobby">
         <div className={`lobby-top ${view === "lobby" ? "lobby-top-compact" : ""}`}>
           <div>
@@ -991,6 +981,7 @@ export default function Page() {
                 征战记录
               </h2>
               <div className="range-buttons">
+                <button className="playlist-launch" onClick={() => setModal("replay-picker")} disabled={!results.length}><Play size={14} /> 逐日连播</button>
                 {[7, 30, 90].map((n) => (
                   <button
                     className={range === n ? "selected" : ""}
@@ -1160,7 +1151,7 @@ export default function Page() {
           className={`game-dialog ${modal === "settlement" ? "settlement-dialog" : modal === "focus" ? "focus-dialog" : ""}`}
         >
           <DialogTitle className={modal === "settlement" ? "sr-only" : undefined}>
-            {modal === "day"
+            {modal === "replay-picker" ? "逐日连播" : modal === "day"
               ? `${day.date} · 每日排位`
               : modal === "rules"
                 ? "排位法则"
@@ -1175,7 +1166,7 @@ export default function Page() {
                         : "每日结算"}
           </DialogTitle>
           <DialogDescription className={modal === "settlement" ? "sr-only" : undefined}>
-            {modal === "day"
+            {modal === "replay-picker" ? "按日期回顾每天的加减星和段位变化，不重复计分。" : modal === "day"
               ? "记录实际完成的行为。星星在结算时统一发放。"
               : modal === "rules"
                 ? "明确的规则，让每一颗星都有来处。"
@@ -1189,6 +1180,15 @@ export default function Page() {
                         ? "仅播放动画，不重复计分。"
                         : "记录已保存。即使关闭动画，也不会漏记或重复计分。"}
           </DialogDescription>
+          {modal === "replay-picker" && <div className="replay-picker">
+        <button className="gold-button" onClick={() => playBatch(settlementPlaylist(results, "", "9999-12-31", watched))}
+          disabled={!settlementPlaylist(results, "", "9999-12-31", watched).length}>连播未回顾 · {settlementPlaylist(results, "", "9999-12-31", watched).length} 天</button>
+        <h3>选择日期区间</h3><div className="playlist-range">
+          <label>开始日期<input type="date" value={replayStart || results[0]?.date || ""} max={replayEnd || last?.date} onInput={e => setReplayStart(e.currentTarget.value)} /></label>
+          <label>结束日期<input type="date" value={replayEnd || last?.date || ""} min={replayStart || results[0]?.date} max={today()} onInput={e => setReplayEnd(e.currentTarget.value)} /></label>
+          <button className="outline-button" onClick={() => playBatch(settlementPlaylist(results, replayStart || results[0]?.date, replayEnd || last?.date))}>按日期连播</button>
+        </div>
+          </div>}
           {modal === "day" && (
             <fieldset disabled={busy || !loaded} className="form-fieldset">
               <Tabs value={tab} onValueChange={setTab}>
