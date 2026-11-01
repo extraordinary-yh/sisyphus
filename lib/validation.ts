@@ -79,6 +79,7 @@ const day = z
     studySession: z.object({ id, studyDate: date, planDate: date }).optional(),
     productiveMinutes: z.number().int().min(0).max(1440).nullable().optional(),
     interviewAdvances: z.array(z.object({
+      kind: z.literal("formal-offer").optional(),
       id,
       title: label,
       evidence: z.string().trim().min(1).max(1200),

@@ -1585,26 +1585,30 @@ export default function Page() {
                       每种生活支线每天最多 +1 星。健身第一版以完成 30
                       分钟记一次。
                     </p>
-                    <h3>面试进入下一轮</h3>
+                    <h3>面试晋级与正式 offer</h3>
                     <p className="fine-print">
                       只有明确收到 advance to next round 才记录。填写公司、已通过轮次和确认依据；同一次晋级修订原条目，不再新增。
-                      每次在当天常规奖惩后升到下一小段的起点，例如废铁Ⅲ → 废铁Ⅱ。王者没有小段，不再加段位奖励。
+                      面试晋级在当天常规奖惩后升到下一小段的起点。正式 offer 升至下一个大段的起点，口头 offer 不计奖。王者没有更高大段，不再加段位奖励。
                     </p>
                     {(day.interviewAdvances ?? []).map((interview) => (
                       <div className="dialog-section" key={interview.id}>
+                        <label className="check-label">
+                          <input type="checkbox" checked={interview.kind === "formal-offer"} onChange={e => update({ interviewAdvances: day.interviewAdvances?.map(x => x.id === interview.id ? { ...x, kind: e.target.checked ? "formal-offer" : undefined } : x) })} />
+                          已收到正式 offer · 升一个大段（口头 offer 不选）
+                        </label>
                         <label className="input-row">
                           公司／已通过轮次
                           <input aria-label="面试公司及通过轮次" value={interview.title} maxLength={180}
                             onChange={(e) => update({ interviewAdvances: day.interviewAdvances?.map(x => x.id === interview.id ? { ...x, title: e.target.value } : x) })} />
                         </label>
-                        <textarea aria-label="进入下一轮的确认依据" placeholder="例如：收到招聘方确认进入下一轮的通知" value={interview.evidence} maxLength={1200}
+                        <textarea aria-label="求职进展的确认依据" placeholder={interview.kind === "formal-offer" ? "确认已收到正式 offer；口头通知不计奖" : "例如：收到招聘方确认进入下一轮的通知"} value={interview.evidence} maxLength={1200}
                           onChange={(e) => update({ interviewAdvances: day.interviewAdvances?.map(x => x.id === interview.id ? { ...x, evidence: e.target.value } : x) })} />
                         <button className="text-link" onClick={() => update({ interviewAdvances: day.interviewAdvances?.filter(x => x.id !== interview.id) })}>移除此条晋级</button>
                       </div>
                     ))}
                     <button className="outline-button" disabled={(day.interviewAdvances?.length ?? 0) >= 10}
                       onClick={() => update({ interviewAdvances: [...(day.interviewAdvances ?? []), { id: uid(), title: "", evidence: "" }] })}>
-                      添加已确认的面试晋级
+                      添加已确认的面试晋级／正式 offer
                     </button>
                     <div className="sleep-editor">
                       <Moon size={25} />
@@ -1655,7 +1659,7 @@ export default function Page() {
                     </div>
                     <div className="review-list">
                       {(
-                        ["study", "hobby", "streak", "video", "sleep", "interview"] as const
+                        ["study", "hobby", "streak", "video", "sleep", "interview", "offer"] as const
                       ).map((type, i) => {
                         const ev = preview.events.filter(
                           (e) => e.type === type,
@@ -1671,6 +1675,7 @@ export default function Page() {
                                   "视频 / 游戏",
                                   "睡眠",
                                   "面试晋级 · 升一小段",
+                                  "正式 offer · 升一个大段",
                                 ][i]
                               }
                             </span>
@@ -1759,6 +1764,8 @@ export default function Page() {
                 已在某大段Ⅰ时会跨到下一大段的最低小段。王者没有小段，不再加段位奖励。
                 面试奖励不代替学习完成，也不豁免结算所需的娱乐确认和睡眠记录。
               </p>
+              <h3>正式 offer</h3>
+              <p>确认拿到正式 offer 后，在当日其他奖惩和面试晋级之后，升至下一个大段的最低小段、0 星（例如废铁 → 青铜Ⅲ）。口头 offer 不发奖；同一份正式 offer 只记录一次，不以旧口头通知重复计奖。王者不再增加大段奖励。仍需确认全天娱乐与入睡时间才能结算。</p>
               <h3>时间的代价</h3>
               <div className="rule-table">
                 <div>
