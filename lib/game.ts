@@ -52,7 +52,7 @@ export type Day = {
   rewardOnlyReason?: string;
   studySession?: { id: string; studyDate: string; planDate: string };
   productiveMinutes?: number | null;
-  interviewAdvances?: { id: string; title: string; evidence: string }[];
+  interviewAdvances?: { id: string; title: string; evidence: string; kind?: "formal-offer" }[];
 };
 export type Focus = {
   id: string;
@@ -78,7 +78,7 @@ export type StarEvent = {
   delta: number;
   before: number;
   after: number;
-  type: "study" | "hobby" | "streak" | "video" | "sleep" | "interview";
+  type: "study" | "hobby" | "streak" | "video" | "sleep" | "interview" | "offer";
   promotion: boolean;
   demotion: boolean;
 };
@@ -154,6 +154,10 @@ export function entertainmentSeconds(day: Day) {
   return day.usage
     .filter((u) => u.category !== "excluded")
     .reduce((s, u) => s + u.seconds, 0);
+}
+export function nextTierScore(score: number) {
+  const rank = rankAt(score);
+  return RANKS[rank.index + 1]?.start ?? score;
 }
 export function nextDivisionScore(score: number) {
   const rank = rankAt(score);
@@ -311,12 +315,15 @@ export function replay(days: Day[]): Result[] {
       "video",
     );
     if (sleep < 0) add(`晚睡 · ${day.bedtime}`, sleep, "sleep");
-    // Apply after ordinary rewards/losses so a confirmed advance earns one
-    // subdivision from the resulting rank. Stable IDs prevent replay duplicates.
-    for (const interview of day.interviewAdvances ?? []) {
+    // Apply career milestones after ordinary scoring: interview subdivisions first,
+    // then formal-offer tiers. Stable IDs prevent replay duplicates.
+    const careerAwards = day.interviewAdvances ?? [];
+    for (const interview of [...careerAwards.filter(a => !a.kind), ...careerAwards.filter(a => a.kind === "formal-offer")]) {
       if (awardedInterviews.has(interview.id)) continue;
       awardedInterviews.add(interview.id);
-      add(`面试晋级 · ${interview.title} · 升一小段`, nextDivisionScore(total) - total, "interview");
+      if (interview.kind === "formal-offer")
+        add(`正式 offer · ${interview.title} · 升一个大段`, nextTierScore(total) - total, "offer");
+      else add(`面试晋级 · ${interview.title} · 升一小段`, nextDivisionScore(total) - total, "interview");
     }
     const gained = events.filter((e) => e.delta > 0).length,
       lost = events.filter((e) => e.delta < 0).length;

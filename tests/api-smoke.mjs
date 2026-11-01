@@ -39,6 +39,12 @@ try{
  const promotionRead=await call();assert.deepEqual(promotionRead.body.state,promoted);
  const promotionResult=promotionRead.body.results.find(x=>x.date===date);
  assert.equal(promotionResult.after,6);assert.equal(promotionResult.events.filter(x=>x.type==='interview').length,3);
+ const offered=structuredClone(promoted);offered.days.find(x=>x.date===date).interviewAdvances.push({id:'qa-formal-offer',title:'Synthetic formal offer',evidence:'Confirmed formal offer',kind:'formal-offer'});
+ const offerSave=await call('PUT',{version:promotionRead.body.version,state:offered});assert.equal(offerSave.status,200);
+ const offerRead=await call();assert.deepEqual(offerRead.body.state,offered);
+ const offerResult=offerRead.body.results.find(x=>x.date===date);assert.equal(offerResult.after,9);assert.equal(offerResult.events.filter(x=>x.type==='offer').length,3);
+ const oralKind=structuredClone(offered);oralKind.days.find(x=>x.date===date).interviewAdvances.at(-1).kind='oral-offer';
+ assert.equal((await call('PUT',{version:offerRead.body.version,state:oralKind})).status,400);
  const noEvidence=structuredClone(promoted);noEvidence.days.find(x=>x.date===date).interviewAdvances[0].evidence='';
  assert.equal((await call('PUT',{version:promotionRead.body.version,state:noEvidence})).status,400);
  const duplicateAward=structuredClone(promoted);duplicateAward.days.push({...newDay('2020-01-02'),interviewAdvances:structuredClone(promotedDay.interviewAdvances)});
