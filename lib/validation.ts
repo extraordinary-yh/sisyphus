@@ -90,6 +90,12 @@ const day = z
     "结算前请确认全天娱乐时长并填写关闭设备时间",
   );
 export const stateSchema = z.object({
+  taskRewards: z.array(z.object({
+    id: z.string().min(1).max(160), source: z.literal("action-hub"),
+    taskId: z.string().min(1).max(160), title: z.string().min(1).max(300),
+    date, recordedAt: z.string().datetime({offset:true}), occurredAt: z.string().datetime({offset:true}).nullable(),
+    stars: z.literal(1), active: z.boolean(),
+  })).max(20000).refine(unique, "任务奖励 ID 重复").optional(),
   days: z
     .array(day)
     .max(4000)

@@ -94,6 +94,10 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
 If you or your agent have customized the code, reconcile those changes first. Do not fix update problems with `git reset --hard` or `git clean -fdx`; the latter also deletes the ignored local database.
 
+## Optional task rewards
+
+Action Hub can synchronize confirmed task completions independently of daily usage and bedtime settlement. Stable IDs prevent duplicate rewards and undo reverses the corresponding star. See [the task reward interface](docs/action-hub.md).
+
 ## Optional imports
 
 ### Study plans / Job Hub

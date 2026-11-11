@@ -127,11 +127,11 @@ export default function Page() {
     entryPlayedRef = useRef(false),
     importRef = useRef<HTMLInputElement>(null),
     planRef = useRef<HTMLInputElement>(null);
-  const results = replay(state.days),
+  const results = replay(state.days, state.taskRewards),
     last = results.at(-1),
     score = last?.after ?? 0,
     rank = rankAt(score),
-    preview = previewDay(day, state.days),
+    preview = previewDay(day, state.days, state.taskRewards),
     totalSeconds = entertainmentSeconds(day);
   const activeStreak =
     last && last.date >= shiftDay(today(), -1) ? last.streak : 0;
@@ -169,8 +169,8 @@ export default function Page() {
       setDirty(false);
       if (!entryPlayedRef.current) {
         entryPlayedRef.current = true;
-        const previous = entryReplay(replay(x.state.days), shiftDay(d, -1));
-        if (previous && settlementPlaylist(replay(x.state.days), "", "9999-12-31", savedWatched).length <= 1) {
+        const previous = entryReplay(replay(x.state.days, x.state.taskRewards), shiftDay(d, -1));
+        if (previous && settlementPlaylist(replay(x.state.days, x.state.taskRewards), "", "9999-12-31", savedWatched).length <= 1) {
           setResult(previous);
           setIsReplay(true);
           setWelcomeReplay(true);
@@ -295,7 +295,7 @@ export default function Page() {
       ...state,
       days: [...state.days.filter((d) => d.date !== next.date), next],
     };
-    const res = previewDay(next, state.days);
+    const res = previewDay(next, state.days, state.taskRewards);
     if (await persist(ns)) {
       setDay(next);
       setResult(res);
@@ -1038,7 +1038,7 @@ export default function Page() {
                       <tr key={r.date}>
                         <td>{r.date}</td>
                         <td>
-                          {r.rewardOnlyReason ? "✦ 奖励结算" : r.perfect ? (
+                          {r.taskOnly ? "✦ 任务奖励 · 全天未结算" : r.rewardOnlyReason ? "✦ 奖励结算" : r.perfect ? (
                             <span className="gold-text">✦ 完美一天</span>
                           ) : r.shieldUsed ? (
                             "◇ 护盾守护"
@@ -1659,7 +1659,7 @@ export default function Page() {
                     </div>
                     <div className="review-list">
                       {(
-                        ["study", "hobby", "streak", "video", "sleep", "interview", "offer"] as const
+                        ["study", "hobby", "streak", "video", "sleep", "interview", "offer", "task"] as const
                       ).map((type, i) => {
                         const ev = preview.events.filter(
                           (e) => e.type === type,
@@ -1676,6 +1676,7 @@ export default function Page() {
                                   "睡眠",
                                   "面试晋级 · 升一小段",
                                   "正式 offer · 升一个大段",
+                                  "任务完成 · 即时奖励",
                                 ][i]
                               }
                             </span>
