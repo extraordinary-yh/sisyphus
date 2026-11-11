@@ -72,13 +72,14 @@ export function focusRemaining(focus: Focus | null, now: number) {
     : focus.remaining;
   return Math.min(focus.duration, Math.max(0, remaining));
 }
-export type GameState = { days: Day[]; rules: Rules; focus: Focus | null };
+export type TaskReward = { id: string; source: "action-hub"; taskId: string; title: string; date: string; recordedAt: string; occurredAt: string | null; stars: number; active: boolean };
+export type GameState = { days: Day[]; rules: Rules; focus: Focus | null; taskRewards?: TaskReward[] };
 export type StarEvent = {
   label: string;
   delta: number;
   before: number;
   after: number;
-  type: "study" | "hobby" | "streak" | "video" | "sleep" | "interview" | "offer";
+  type: "study" | "hobby" | "streak" | "video" | "sleep" | "interview" | "offer" | "task";
   promotion: boolean;
   demotion: boolean;
 };
@@ -99,6 +100,7 @@ export type Result = {
   bonus: number;
   studyRemainder: number;
   rewardOnlyReason?: string;
+  taskOnly?: boolean;
 };
 export const DEFAULT_RULES: Rules = {
   mode: "gradient",
@@ -230,7 +232,7 @@ export function milestone(n: number) {
   const d = n % 30;
   return d === 3 ? 1 : d === 7 ? 2 : d === 14 ? 3 : d === 0 && n > 0 ? 5 : 0;
 }
-export function replay(days: Day[]): Result[] {
+export function replay(days: Day[], taskRewards: TaskReward[] = []): Result[] {
   let total = 0,
     streak = 0,
     strictStreak = 0,
@@ -238,8 +240,12 @@ export function replay(days: Day[]): Result[] {
     previous = "";
   const results: Result[] = [];
   const awardedInterviews = new Set<string>();
-  for (const day of [...days]
-    .filter((d) => d.settled)
+  const uniqueRewards = new Map<string, TaskReward>();
+  for (const reward of taskRewards) uniqueRewards.set(reward.id, reward);
+  const activeRewards = [...uniqueRewards.values()].filter(r => r.active);
+  const extraDays = [...new Set(activeRewards.map(r => r.date))].filter(date => !days.some(d => d.date === date)).map(date => newDay(date));
+  for (const day of [...days, ...extraDays]
+    .filter((d) => d.settled || activeRewards.some(r => r.date === d.date))
     .sort((a, b) => a.date.localeCompare(b.date))) {
     if (previous && shiftDay(previous, 1) !== day.date) {
       streak = 0;
@@ -265,66 +271,72 @@ export function replay(days: Day[]): Result[] {
         });
       }
     };
-    const completed = day.blocks.filter((b) => b.done);
-    const timeReward = day.rules.studyReward === "time-or-blocks";
-    const divisor = !timeReward && rankAt(before).index >= 5 ? 2 : 1;
-    for (let i = 0; i + divisor <= completed.length; i += divisor)
-      add(
-        divisor === 1
-          ? completed[i].title
-          : `${completed[i].title} + ${completed[i + 1].title}`,
-        1,
-        "study",
-      );
-    if (timeReward) {
-      const timeStars = Math.floor((day.productiveMinutes ?? 0) / 120);
-      const extra = Math.max(0, timeStars - completed.length);
-      if (extra) add(`学习＋找工 · ${duration((day.productiveMinutes ?? 0) * 60)} · 时间补足`, extra, "study");
-    }
-    for (const h of day.hobbies)
-      if (h.minutes >= h.target)
-        add(`${h.title} · ${h.minutes} min`, 1, "hobby");
-    const perfect =
-      day.blocks.length > 0 &&
-      completed.length === day.blocks.length &&
-      day.usageConfirmed &&
-      entertainmentSeconds(day) <= 3600;
-    let shieldUsed = false,
-      bonus = 0;
-    if (perfect) {
-      streak++;
-      strictStreak++;
-      if (day.rules.streak) {
-        bonus = milestone(streak);
-        if (bonus) add(`${streak} 天连胜 · 里程碑`, bonus, "streak");
+    let perfect = false, shieldUsed = false, bonus = 0, studyRemainder = 0;
+    if (day.settled) {
+      const completed = day.blocks.filter((b) => b.done);
+      const timeReward = day.rules.studyReward === "time-or-blocks";
+      const divisor = !timeReward && rankAt(before).index >= 5 ? 2 : 1;
+      for (let i = 0; i + divisor <= completed.length; i += divisor)
+        add(
+          divisor === 1
+            ? completed[i].title
+            : `${completed[i].title} + ${completed[i + 1].title}`,
+          1,
+          "study",
+        );
+      if (timeReward) {
+        const timeStars = Math.floor((day.productiveMinutes ?? 0) / 120);
+        const extra = Math.max(0, timeStars - completed.length);
+        if (extra) add(`学习＋找工 · ${duration((day.productiveMinutes ?? 0) * 60)} · 时间补足`, extra, "study");
       }
-      if (day.rules.shield && streak % 7 === 0)
-        shields = Math.min(1, shields + 1);
-    } else {
-      strictStreak = 0;
-      if (day.rules.shield && day.useShield && shields > 0 && streak > 0) {
-        shields--;
-        shieldUsed = true;
-      } else streak = 0;
+      for (const h of day.hobbies)
+        if (h.minutes >= h.target)
+          add(`${h.title} · ${h.minutes} min`, 1, "hobby");
+      perfect =
+        day.blocks.length > 0 &&
+        completed.length === day.blocks.length &&
+        day.usageConfirmed &&
+        entertainmentSeconds(day) <= 3600;
+      if (perfect) {
+        streak++;
+        strictStreak++;
+        if (day.rules.streak) {
+          bonus = milestone(streak);
+          if (bonus) add(`${streak} 天连胜 · 里程碑`, bonus, "streak");
+        }
+        if (day.rules.shield && streak % 7 === 0)
+          shields = Math.min(1, shields + 1);
+      } else {
+        strictStreak = 0;
+        if (day.rules.shield && day.useShield && shields > 0 && streak > 0) {
+          shields--;
+          shieldUsed = true;
+        } else streak = 0;
+      }
+      const sleep = daySleepScore(day);
+      if (sleep > 0) add("早睡 · 关闭全部设备", sleep, "sleep");
+      add(
+        `娱乐 ${duration(entertainmentSeconds(day))}`,
+        -dayVideoPenalty(day),
+        "video",
+      );
+      if (sleep < 0) add(`晚睡 · ${day.bedtime}`, sleep, "sleep");
+      // Apply career milestones after ordinary scoring: interview subdivisions first,
+      // then formal-offer tiers. Stable IDs prevent replay duplicates.
+      const careerAwards = day.interviewAdvances ?? [];
+      for (const interview of [...careerAwards.filter(a => !a.kind), ...careerAwards.filter(a => a.kind === "formal-offer")]) {
+        if (awardedInterviews.has(interview.id)) continue;
+        awardedInterviews.add(interview.id);
+        if (interview.kind === "formal-offer")
+          add(`正式 offer · ${interview.title} · 升一个大段`, nextTierScore(total) - total, "offer");
+        else add(`面试晋级 · ${interview.title} · 升一小段`, nextDivisionScore(total) - total, "interview");
+      }
+      studyRemainder = completed.length % divisor;
     }
-    const sleep = daySleepScore(day);
-    if (sleep > 0) add("早睡 · 关闭全部设备", sleep, "sleep");
-    add(
-      `娱乐 ${duration(entertainmentSeconds(day))}`,
-      -dayVideoPenalty(day),
-      "video",
-    );
-    if (sleep < 0) add(`晚睡 · ${day.bedtime}`, sleep, "sleep");
-    // Apply career milestones after ordinary scoring: interview subdivisions first,
-    // then formal-offer tiers. Stable IDs prevent replay duplicates.
-    const careerAwards = day.interviewAdvances ?? [];
-    for (const interview of [...careerAwards.filter(a => !a.kind), ...careerAwards.filter(a => a.kind === "formal-offer")]) {
-      if (awardedInterviews.has(interview.id)) continue;
-      awardedInterviews.add(interview.id);
-      if (interview.kind === "formal-offer")
-        add(`正式 offer · ${interview.title} · 升一个大段`, nextTierScore(total) - total, "offer");
-      else add(`面试晋级 · ${interview.title} · 升一小段`, nextDivisionScore(total) - total, "interview");
-    }
+    // Confirmed task outputs are independent of daily usage and sleep settlement.
+    // Apply at their recording date; an unknown activity date is never fabricated.
+    for (const reward of activeRewards.filter(r => r.date === day.date).sort((a,b) => a.id.localeCompare(b.id)))
+      add(`任务完成 · ${reward.title}`, reward.stars, "task");
     const gained = events.filter((e) => e.delta > 0).length,
       lost = events.filter((e) => e.delta < 0).length;
     results.push({
@@ -342,18 +354,19 @@ export function replay(days: Day[]): Result[] {
       shieldUsed,
       shields,
       bonus,
-      studyRemainder: completed.length % divisor,
+      studyRemainder,
+      ...(!day.settled ? { taskOnly: true } : {}),
       ...(day.rewardOnlyReason ? { rewardOnlyReason: day.rewardOnlyReason } : {}),
     });
-    previous = day.date;
+    if (day.settled) previous = day.date;
   }
   return results;
 }
-export function previewDay(day: Day, days: Day[]) {
+export function previewDay(day: Day, days: Day[], taskRewards: TaskReward[] = []) {
   return replay([
     ...days.filter((d) => d.date !== day.date),
     { ...day, settled: true },
-  ]).find((r) => r.date === day.date)!;
+  ], taskRewards).find((r) => r.date === day.date)!;
 }
 export function parseUsage(text: string): Usage[] {
   const rows: Usage[] = [];

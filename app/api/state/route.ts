@@ -17,7 +17,7 @@ export async function GET() {
       .first<{ state: string; version: number }>();
     const state = row ? JSON.parse(row.state) : emptyState();
     return Response.json(
-      { state, version: row?.version ?? 0, results: replay(state.days) },
+      { state, version: row?.version ?? 0, taskRewardsVersion: 1, results: replay(state.days, state.taskRewards) },
       { headers: noCache },
     );
   } catch (e) {
@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
         { status: 409 },
       );
     return Response.json(
-      { state, version: next, results: replay(state.days) },
+      { state, version: next, taskRewardsVersion: 1, results: replay(state.days, state.taskRewards) },
       { headers: noCache },
     );
   } catch (e) {
