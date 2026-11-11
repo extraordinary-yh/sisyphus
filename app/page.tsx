@@ -1038,7 +1038,7 @@ export default function Page() {
                       <tr key={r.date}>
                         <td>{r.date}</td>
                         <td>
-                          {r.rewardOnlyReason ? "✦ 奖励结算" : r.perfect ? (
+                          {r.taskOnly ? "✦ 任务奖励 · 全天未结算" : r.rewardOnlyReason ? "✦ 奖励结算" : r.perfect ? (
                             <span className="gold-text">✦ 完美一天</span>
                           ) : r.shieldUsed ? (
                             "◇ 护盾守护"

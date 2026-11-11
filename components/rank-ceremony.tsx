@@ -84,7 +84,7 @@ export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, on
   return <div className={`rank-cinema ${isLoss ? "cinema-loss" : "cinema-gain"} ${frame?.transformed ? event?.promotion ? "cinema-promotion" : "cinema-demotion" : ""} ${paused ? "cinema-paused" : ""} ${reduced ? "cinema-reduced" : ""}`}
     data-testid="rank-ceremony" data-event-index={cursor.index} data-phase={finished ? "complete" : frame?.transformed ? "rank-change" : frame?.impacted ? "impact" : cursor.index < 0 ? "intro" : "flight"}>
     <div className="cinema-grain" aria-hidden="true"/>
-    <div className="cinema-header"><span className="eyebrow">{welcome ? "YESTERDAY’S ASCENT" : replay ? "THE ASCENT · REPLAY" : "THE ASCENT · SETTLEMENT"}</span><span>{result.date} · {replay ? "战报回放" : "每日结算"}</span></div>
+    <div className="cinema-header"><span className="eyebrow">{welcome ? "YESTERDAY’S ASCENT" : replay ? "THE ASCENT · REPLAY" : "THE ASCENT · SETTLEMENT"}</span><span>{result.date} · {result.taskOnly ? "任务奖励 · 全天未结算" : replay ? "战报回放" : "每日结算"}</span></div>
     <div className="cinema-tools">
       <button className="cinema-sound" onClick={() => { if (!sound || audioReady) onSoundToggle(); void engine.current?.unlock().then(setAudioReady).catch(() => {}); }}>
         {sound && audioReady ? <Volume2 size={16}/> : <VolumeX size={16}/>}{sound && audioReady ? "音效已开启" : "开启打铁音效"}
@@ -140,6 +140,6 @@ export function RankCeremony({ result, replay, welcome, sound, onSoundToggle, on
       <div className="ceremony-progress" role="progressbar" aria-label="结算演出进度" aria-valuemin={0} aria-valuemax={result.events.length} aria-valuenow={Math.max(0,cursor.index)}><i style={{width:`${(Math.max(0,cursor.index + cursor.elapsed / duration)/Math.max(1,result.events.length))*100}%`}}/></div>
       <div><span>{Math.max(0,cursor.index+1)} / {result.events.length} 颗</span><button onClick={()=>setPaused(p=>!p)}>{paused?<Play size={14}/>:<Pause size={14}/>} {paused?"继续演出":"暂停演出"}</button><button onClick={()=>setCursor({index:result.events.length,elapsed:0})}><SkipForward size={14}/> 查看结果</button></div>
     </div>}
-    <span className="cinema-readonly">{replay ? "回放不会重复加减星" : "结算已保存"}{reduced ? " · 已遵循减少动态效果设置" : ""}</span>
+    <span className="cinema-readonly">{replay ? "回放不会重复加减星" : result.taskOnly ? "任务奖励已保存" : "结算已保存"}{reduced ? " · 已遵循减少动态效果设置" : ""}</span>
   </div>;
 }
